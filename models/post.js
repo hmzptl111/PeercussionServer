@@ -2,22 +2,22 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const postStructure = {
-    // uId: {
-    //     type: mongoose.Types.ObjectId,
-    //     required: true
-    // },
     uId: {
         type: mongoose.Types.ObjectId,
+        required: true
+    },
+    uName: {
+        type: String,
         required: true
     },
     cId: {
         type: mongoose.Types.ObjectId,
         required: true
     },
-    // cName: {
-    //     type: String,
-    //     required: true
-    // },
+    cName: {
+        type: String,
+        required: true
+    },
     title: {
         type: String,
         required: true
@@ -37,10 +37,13 @@ const postStructure = {
         required: true,
         default: 0
     },
-    comments: {
-        type: Array,
-        required: true,
-        default: []
+    comments: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Comment'
+    }],
+    thumbnail: {
+        type: String,
+        required: false
     }
 }
 

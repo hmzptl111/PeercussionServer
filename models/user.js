@@ -20,9 +20,10 @@ const userStructure = {
     posts: {
         type: Array
     },
-    comments: {
-        type: Array
-    },
+    comments: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Comment'
+    }],
     about: {
         type: String
     },
@@ -39,12 +40,14 @@ const userStructure = {
     profilePicture: {
         type: String
     },
-    upvotedPosts: {
-        type: Array
-    },
-    downvotedPosts: {
-        type: Array
-    },
+    upvotedPosts: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Post'
+    }],
+    downvotedPosts: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Post'
+    }],
     moderatesCommunities: {
         type: Array
     },

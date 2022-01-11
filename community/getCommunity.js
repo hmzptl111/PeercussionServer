@@ -3,44 +3,54 @@ const app = express.Router();
 const Community = require('../models/community');
 
 app.post('/:communityName', (req, res) => {
-    const c = req.params.communityName;
-    console.log(req.query.postOffset);
-    
-    if(req.query.fetchPostIDs === 'true' && req.query.postOffset) {
+    if(req.body.getPosts === 'affirmative') {
         Community.findOne({
-            name: {
-                $eq: c
-            }
-        },
-        {
-            posts: {
-                $slice: [Number(req.query.postOffset), 3]
-            }
-        },
-        (err, posts) => {
-            if(err) {
-                console.log(err);
-                res.end();
-            } else {
-                console.log(posts.posts);
-                res.end(JSON.stringify(posts.posts));
-            }
+            cName: req.params.communityName
         })
-        .select('-_id -name -desc -followers -upvotes -downvotes -relatedCommunities -createdAt -updatedAt -__v');
+        .select('-_id posts')
+        .populate({
+            path: 'posts',
+            options: {
+                limit: 3,
+                skip: req.body.postsOffset
+            },
+            select: '-body -comments -createdAt -updatedAt -__v'
+        })
+        .exec((err, community) => {
+            if(err) {
+                res.status(400);
+                res.end(JSON.stringify({
+                    error: `Something went wrong: ${err}`
+                }));
+                return;
+            }
+            if(community) {
+                // console.log(community.posts.length);
+                if(community.posts.length < 3) {
+                    // community.hasMorePosts = false;
+                    console.log('no more posts available');
+                }
+                res.end(JSON.stringify(community.posts));
+                return;
+            }
+        });
     } else {
         Community.findOne({
-            name: {
-                $eq: c
-            }
-        },
-        async (err, result) => {
+            cName: req.params.communityName
+        })
+        .select('-posts')
+        .exec((err, community) => {
             if(err) {
                 console.log(err);
-                res.end();
-            } else {
-                res.end(JSON.stringify(result));
+                res.status(400);
+                res.end(JSON.stringify({
+                    error: `Something went wrong: ${err}`
+                }));
+                return;
             }
-        }).select('-posts');
+            // console.log(community);
+            res.end(JSON.stringify(community));
+        });
     }
 });
 

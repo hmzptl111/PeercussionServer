@@ -32,15 +32,28 @@ app.post('/:type', isAuth, async (req, res) => {
                     res.end('Community doesn\'t exist');
                     return;
                 } else {
-                    const payload = {
-                        //uId: "",
-                        cId: req.body.cId,
-                        uId: req.session.uId,
-                        title: req.body.title,
-                        body: req.body.body,
-                        // upvotes: 0,
-                        // downvotes: 0,
-                        // comments: []
+                    const thumbnail = req.body.body.blocks.find(block => block.type === 'image');
+                    console.log(thumbnail);
+                    let payload;
+                    if(thumbnail) {
+                        payload = {
+                            uId: req.session.uId,
+                            uName: req.session.uName,
+                            cId: req.body.cId,
+                            cName: req.body.cName,
+                            title: req.body.title,
+                            body: req.body.body,
+                            thumbnail: thumbnail.data.file.url
+                        }
+                    } else {
+                        payload = {
+                            uId: req.session.uId,
+                            uName: req.session.uName,
+                            cId: req.body.cId,
+                            cName: req.body.cName,
+                            title: req.body.title,
+                            body: req.body.body
+                        }
                     }
             
                     const post = new Post(payload);

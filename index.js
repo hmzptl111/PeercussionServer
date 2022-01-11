@@ -5,6 +5,7 @@ require('dotenv').config();
 const connectDB = require('./db/database');
 const session = require('express-session');
 const MongoDBSessionStore = require('connect-mongodb-session')(session);
+const cookieParser = require('cookie-parser');
 
 //initializations
 const PORT = process.env.PORT || 3001;
@@ -38,7 +39,14 @@ const community = require('./community/getCommunity');
 const post = require('./post/getPost');
 
 //posts
-const postsThumbnails = require('./posts/getPostsThumbnails');
+// const postsThumbnails = require('./posts/getPostsThumbnails');
+
+//comments
+const createComment = require('./comments/createComment');
+const comments = require('./comments/getComments');
+
+//vote
+const vote = require('./post/votePost');
 
 //auth
 const signUp = require('./auth/signUp');
@@ -49,6 +57,7 @@ const userAuthStatus = require('./auth/userAuthStatus');
 app.use('/uploads', express.static('./uploads'));
 app.use(express.urlencoded({extended: true}));
 app.use(express.json());
+app.use(cookieParser());
 
 //
 const store = new MongoDBSessionStore({
@@ -74,8 +83,11 @@ app.use('/search', search);
 app.use('/images', postBodyImage);
 app.use('/community', community);
 app.use('/post', post);
-app.use('/postsThumbnails', postsThumbnails);
+// app.use('/postsThumbnails', postsThumbnails);
 app.use('/signUp', signUp);
 app.use('/signIn', signIn);
 app.use('/signOut', signOut);
 app.use('/checkUserAuthStatus', userAuthStatus);
+app.use('/createComment', createComment);
+app.use('/comments', comments);
+app.use('/vote', vote);

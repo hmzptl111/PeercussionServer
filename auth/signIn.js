@@ -16,7 +16,7 @@ app.post('', (req, res) => {
     }
 
     User.findOne({
-        //email can also be used as username to sign in
+        //email can also be used to sign in
         $or: [
             {username: username},
             {email: username}
@@ -25,7 +25,7 @@ app.post('', (req, res) => {
         if(err) {
             res.status(400);
             res.end(JSON.stringify({
-                error: err
+                error: `Something went wrong: ${err}`
             }));
         }
 
@@ -39,6 +39,8 @@ app.post('', (req, res) => {
                 req.session.uId = user._id.toString();
                 req.session.uName = user.username;
                 // req.session.save();
+                res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
+                res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
                 res.end(JSON.stringify({
                     message: `Welcome, ${user.username}`
                 }));
