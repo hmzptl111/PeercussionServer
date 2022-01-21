@@ -41,6 +41,10 @@ const postStructure = {
         type: Schema.Types.ObjectId,
         ref: 'Comment'
     }],
+    totalComments: {
+        type: Number,
+        default: 0
+    },
     thumbnail: {
         type: String,
         required: false

@@ -27,6 +27,7 @@ app.post('', (req, res) => {
             res.end(JSON.stringify({
                 error: `Something went wrong: ${err}`
             }));
+            return;
         }
 
         if(user) {
@@ -38,9 +39,8 @@ app.post('', (req, res) => {
                 req.session.isAuth = true;
                 req.session.uId = user._id.toString();
                 req.session.uName = user.username;
-                // req.session.save();
-                res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
-                res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
+                // res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
+                // res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
                 res.end(JSON.stringify({
                     message: `Welcome, ${user.username}`
                 }));

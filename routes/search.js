@@ -2,50 +2,60 @@ const express = require('express');
 const app = express.Router();
 
 const Community = require('../models/community');
+const User = require('../models/user');
 
 app.post('/:type', async (req, res) => {
+    const {text} = req.body;
+    const {type} = req.params;
+    const {uId} = req.session;
 
-    if(req.params.type === 'community') {
-        const text = req.body.text;
-        console.log(text);
-        if(text === '') {
-            res.end();
-            return;
-        }
+    if(text === '') {
+        res.end();
+        return;
+    }
 
-        const pattern = /\W/g;
-        const isInvalid = pattern.test(text);
+    const pattern = /\W/g;
+    const isInvalid = pattern.test(text);
 
-        if(!isInvalid) {
+    if(!isInvalid) {
+        if(type === 'community') {
             Community.find({
                 cName: {
-                    $regex: new RegExp(text, 'g')
+                    $regex: new RegExp(text, 'ig')
                 }
-            }, (err, result) => {
+            })
+            .limit(5)
+            .select('cName cThumbnail')
+            .exec((err, communities) => {
                 if(err) {
-                    console.error(err);
-                    res.end();
-                } else {
-                    let communities = [];
-
-                    result.forEach(c => {
-                        let _id = c._id;
-                        let cName = c.cName;
-                        let community = {
-                            _id,
-                            cName
-                        }
-                        communities = [...communities, community];
-                    });
-
-                    res.end(JSON.stringify(communities));
+                    console.log(`Something went wrong: ${err}`);
+                    return;
                 }
-            }
-            );
-        } else {
-            res.end('invalid characters');
-            return;
-        }
+
+                res.end(JSON.stringify(communities));
+            });
+        } else if(type === 'user') {
+            User.find({
+                username: {
+                    $regex: new RegExp(text, 'ig')
+                }
+            })
+            .limit(5)
+            .select('username profilePicture')
+            .exec((err, users) => {
+                if(err) {
+                    console.log(`Something went wrong: ${err}`);
+                    return;
+                }
+                
+                const matchedUsers = users.filter(user => user._id.toString() !== uId);
+
+                res.end(JSON.stringify(matchedUsers));
+            });
+        }   
+    } else {
+        res.end('invalid characters');
+        return;
     }
 });
 

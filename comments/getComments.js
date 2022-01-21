@@ -48,12 +48,6 @@ app.post('', (req, res) => {
             res.end(JSON.stringify(post.comments));
         });
     }
-    // console.log(req.query.commentOffset);
-    // if(req.query.from === 'post') {
-    //     console.log('fetching comments from post');
-    // } else if(req.query.from === 'user') {
-    //     console.log('fetching comments from user profile');
-    // }
 });
 
 module.exports = app;

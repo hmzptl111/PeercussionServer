@@ -8,7 +8,7 @@ const uuidv4 = require('uuid').v4;
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, './uploads/');
+        cb(null, './uploads/postImages');
     },
     filename: (req, file, cb) => {
         const uuid = uuidv4();
@@ -21,7 +21,7 @@ const imageFilters = (req, file, cb) => {
     if(file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
         cb(null, true);
     } else {
-        cb(null, false);
+        cb(new Error('Invalid image type, only PNG and JPEG are accepted'), false);
     }
 }
 
@@ -35,10 +35,12 @@ const upload = multer({
 
 app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
     if(req.params.type === 'postBodyImageFromDevice') {
+        console.log(req.file);
         const result = {
-                'success': 1,
-                'file': {
-                    'url': `${process.env.ROOT_URL}/uploads/${req.file.filename}`
+                success: 1,
+                file: {
+                    // url: `${process.env.ROOT_URL}/uploads/postImages/${req.file.filename}`
+                    url: `/uploads/postImages/${req.file.filename}`
                 }
             };
         res.end(JSON.stringify(result));
@@ -47,7 +49,7 @@ app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
         const ext = url[url.length - 1];
         const uuid = uuidv4();
         const filename = uuid + '.' + ext
-        const file = fs.createWriteStream(`./uploads/${filename}`);
+        const file = fs.createWriteStream(`./uploads/postImages/${filename}`);
 
         //change it to only support https in production
         const protocol = req.body.url.split(':')[0];
@@ -59,9 +61,10 @@ app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
                 file.on('finish', function() {
                     file.close(() => {
                         const result = {
-                            'success': 1,
-                            'file': {
-                                'url': `${process.env.ROOT_URL}/uploads/${filename}`
+                            success: 1,
+                            file: {
+                                // url: `${process.env.ROOT_URL}/uploads/postImages/${filename}`
+                                url: `/uploads/postImages/${filename}`
                             }
                         };
                         res.end(JSON.stringify(result));
@@ -76,9 +79,10 @@ app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
                 file.on('finish', function() {
                     file.close(() => {
                         const result = {
-                            'success': 1,
-                            'file': {
-                                'url': `${process.env.ROOT_URL}/uploads/${filename}`
+                            success: 1,
+                            file: {
+                                url: `/uploads/postImages/${filename}`
+                                // url: `${process.env.ROOT_URL}/uploads/postImages/${filename}`
                             }
                         };
                         res.end(JSON.stringify(result));

@@ -17,9 +17,10 @@ const userStructure = {
         required: true,
         unique: true
     },
-    posts: {
-        type: Array
-    },
+    posts: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Post'
+    }],
     comments: [{
         type: mongoose.Types.ObjectId,
         ref: 'Comment'
@@ -30,9 +31,18 @@ const userStructure = {
     points: {
         type: Number
     },
-    friends: {
-        type: Array
-    },
+    friends: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'User'
+    }],
+    pendingFriendRequests: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'User'
+    }],
+    friendRequestsSent: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'User'
+    }],
     isAccountPrivate: {
         type: Boolean,
         default: false
@@ -48,15 +58,26 @@ const userStructure = {
         type: mongoose.Types.ObjectId,
         ref: 'Post'
     }],
-    moderatesCommunities: {
-        type: Array
-    },
-    followingCommunities: {
-        type: Array
-    },
-    restrictedFrom: {
-        type: Array
-    }
+    upvotedComments: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Comment'
+    }],
+    downvotedComments: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Comment'
+    }],
+    moderatesCommunities: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Community'
+    }],
+    followingCommunities: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Community'
+    }],
+    restrictedFrom: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Community'
+    }],
 }
 
 const userOptions = {

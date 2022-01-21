@@ -3,6 +3,8 @@ const app = express.Router();
 
 const Post = require('../models/post');
 const Community = require('../models/community');
+const User = require('../models/user');
+const Moderator = require('../models/moderator');
 
 const isAuth = require('../auth/isAuth');
 
@@ -13,6 +15,8 @@ const containsSpecialChar = str => {
 
 app.post('/:type', isAuth, async (req, res) => {
     if(req.params.type === 'post') {
+        const {uId, uName} = req.session;
+        const {cId, cName, title, body} = req.body;
         console.log('creating a post');
 
         if(req.body.title === '') {
@@ -21,134 +25,205 @@ app.post('/:type', isAuth, async (req, res) => {
             return;
         }
 
-        Community.findOne({
-            _id: req.body.cId
-        }, (err, result) => {
+        User.findOne({
+            _id: uId
+        })
+        .exec((err, user) => {
             if(err) {
-                console.error(err);
-            } else {
-                if(!result) {
-                    res.status(400);
-                    res.end('Community doesn\'t exist');
-                    return;
-                } else {
-                    const thumbnail = req.body.body.blocks.find(block => block.type === 'image');
-                    console.log(thumbnail);
-                    let payload;
-                    if(thumbnail) {
-                        payload = {
-                            uId: req.session.uId,
-                            uName: req.session.uName,
-                            cId: req.body.cId,
-                            cName: req.body.cName,
-                            title: req.body.title,
-                            body: req.body.body,
-                            thumbnail: thumbnail.data.file.url
-                        }
-                    } else {
-                        payload = {
-                            uId: req.session.uId,
-                            uName: req.session.uName,
-                            cId: req.body.cId,
-                            cName: req.body.cName,
-                            title: req.body.title,
-                            body: req.body.body
-                        }
-                    }
-            
-                    const post = new Post(payload);
-                    post.save()
-                        .then(result => {
-                            Community.updateOne(
-                                {
-                                    _id: result.cId
-                                },
-                                {
-                                    $push: {
-                                        posts: {
-                                            $each: [result._id],
-                                            $position: 0
-                                        }
-                                    }
-                                },
-                                {
-                                    new: true
-                                },
-                                (err, doc) => {
-                                    if(err) {
-                                        console.log(err);
-                                    } else {
-                                        console.log(doc);
-                                    }
-                                }
-                            );
+                console.log(`Something went wrong: ${err}`);
+                return;
+            }
+            if(!user) {
+                console.log('User doesn\'t exist');
+                return;
+            }
 
-                            res.end(JSON.stringify(result.body));
-                        })
-                        .catch(err => {
-                            res.status(400);
-                            res.end('There was some problem while creating the post, please try again');
-                            return;
-                        });
+        Community.findOne({
+            _id: cId
+        })
+        .exec((err, community) => {
+
+            if(err) {
+                console.log(`Something went wrong: ${err}`);
+                return;
+            }
+            if(!community) {
+                console.log('Community doesn\'t exist');
+                return;
+            }
+            const thumbnail = req.body.body.blocks.find(block => block.type === 'image');
+            let payload;
+
+            if(thumbnail) {
+                payload = {
+                    uId: uId,
+                    uName: uName,
+                    cId: cId,
+                    cName: cName,
+                    title: title,
+                    body: body,
+                    thumbnail: thumbnail.data.file.url
+                }
+            } else {
+                payload = {
+                    uId: uId,
+                    uName: uName,
+                    cId: cId,
+                    cName: cName,
+                    title: title,
+                    body: body
                 }
             }
+
+            const post = new Post(payload)
+            post.save()
+            .then(newPost => {
+                Community.findOne({
+                    _id: cId
+                })
+                .exec(async (err, community) => {
+                    if(err) {
+                        console.log(`Something went wrong: ${err}`);
+                        return;
+                    }
+                    if(!community) {
+                        console.log('Community doesn\'t exist');
+                        return;
+                    }
+                    let newCommunityPosts = community.posts;
+                    let newUserPosts = user.posts;
+
+                    newCommunityPosts.unshift(newPost._id);
+                    newUserPosts.unshift(newPost._id);
+                    // newCommunityPosts.splice(0, 0, newPost._id);
+                    // newUserPosts.splice(0, 0, newPost._id);
+                    community.posts = newCommunityPosts;
+                    user.posts = newUserPosts;
+
+                    await community.save();
+                    await user.save();
+                    res.end(JSON.stringify(newPost));
+                })
+            })
+            .catch(err => {
+                console.log(`Something went wrong: ${err}`);
+                return;
+            })
         });
+    });
     } else if(req.params.type === 'community') {
+        const {cName, desc, relatedCommunities} = req.body;
+        const {uId, uName} = req.session;
+
         console.log('creating a community');
 
-        if(req.body.cName === '') {
+        if(cName === '') {
             res.status(400);
             res.end('Community name can\'t be empty');
             return;
         }
 
-        const isInvalid = containsSpecialChar(req.body.cName);
+        const isInvalid = containsSpecialChar(cName);
         if(isInvalid) {
             res.status(400);
             res.end('Special characters aren\'t allowed');
             return;
         }
 
-        //findOne => find
-        Community.findOne({
-            cName: req.body.cName
-        }, (err, result) => {
+        User.findOne({
+            _id: uId
+        })
+        .exec((err, user) => {
             if(err) {
-                console.error(err);
-            } else {
-                if(!result) {
-                    const payload = {
-                        mId: req.session.uId,
-                        mName: req.session.uName,
-                        cName: req.body.cName,
-                        desc: req.body.desc,
-                        // posts: [],
-                        // followers: 0,
-                        // upvotes: 0,
-                        // downvotes: 0,
-                        relatedCommunities: req.body.relatedCommunities
-                    }
-            
-                    const community = new Community(payload);
-                    community.save()
-                        .then(result => {
-                            console.log(result);
-                            res.end(result.cName);
-                        })
-                        .catch(err => {
-                            console.log(err);
-                            res.status(400);
-                            res.end('There was some problem while creating the community, please try again');
-                            return;
-                        });
-                } else {
-                    res.status(400);
-                    res.end('Community already exists');
+                console.log(`Something went wrong: ${err}`);
+                return;
+            }
+            if(!user) {
+                console.log('User doesn\'t exist');
+                return;
+            }
+
+            Community.findOne({
+                cName: cName
+            })
+            .exec((err, community) => {
+                if(err) {
+                    console.log(`Something went wrong: ${err}`);
                     return;
                 }
-            }
+                if(community) {
+                    console.log('Community already exists');
+                    return;
+                }
+    
+                const payload = {
+                    mId: uId,
+                    mName: uName,
+                    cName: cName,
+                    desc: desc,
+                    relatedCommunities: relatedCommunities
+                }
+    
+                const newCommunity = new Community(payload);
+                newCommunity.save()
+                .then(communityResult => {
+                    const payload = {
+                        cId: communityResult._id,
+                        uId: uId
+                    }
+                    const moderator = new Moderator(payload);
+                    moderator.save()
+                    .then(async (moderatorResult) => {
+                        user.moderatesCommunities.unshift(moderatorResult.cId);
+                        await user.save();
+                        res.end(communityResult.cName);
+                    })
+                    .catch(err => {
+                        console.log(`Something went wrong: ${err}`);
+                        return;
+                    });
+                })
+                .catch(err => {
+                    console.log(`Something went wrong: ${err}`);
+                    return;
+                })
+            }); 
         });
 
+        // Community.findOne({
+        //     cName: cName
+        // }, (err, result) => {
+        //     if(err) {
+        //         console.error(err);
+        //     } else {
+        //         if(!result) {
+        //             const payload = {
+        //                 mId: uId,
+        //                 mName: uName,
+        //                 cName: cName,
+        //                 desc: desc,
+        //                 relatedCommunities: relatedCommunities
+        //             }
+            
+        //             const community = new Community(payload);
+        //             community.save()
+        //                 .then(result => {
+        //                     console.log(result);
+        //                     res.end(result.cName);
+        //                 })
+        //                 .catch(err => {
+        //                     console.log(err);
+        //                     res.status(400);
+        //                     res.end('There was some problem while creating the community, please try again');
+        //                     return;
+        //                 });
+        //         } else {
+        //             res.status(400);
+        //             res.end('Community already exists');
+        //             return;
+        //         }
+        //     }
+        // });
         }
 });
 

@@ -63,16 +63,15 @@ app.post('', async (req, res) => {
             const user = new User(payload);
             user.save()
                 .then(result => {
-                    res.status(200);
                     res.send(JSON.stringify({
                         message: `Hello ${result.username}, welcome to Peercussion`
                     }));
                     return;
                 })
                 .catch(err => {
-                    res.status(400);
+                    // res.status(400);
                     res.send(JSON.stringify({
-                        error: err
+                        error: `Something went wrong: ${err}`
                     }));
                     return;
                 })

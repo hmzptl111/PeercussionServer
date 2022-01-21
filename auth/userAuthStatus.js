@@ -4,7 +4,9 @@ const app = express.Router();
 app.post('', (req, res) => {
     if(req.session && req.session.isAuth) {
         res.end(JSON.stringify({
-            message: 'Session exists'
+            uId: req.session.uId,
+            uName: req.session.uName,
+            isAuth: req.session.isAuth
         }));
     } else {
         res.end(JSON.stringify({
