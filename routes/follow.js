@@ -23,6 +23,11 @@ app.post('', (req, res) => {
             return;
         }
 
+        if(user.moderatesCommunities.includes(target)) {
+            console.log('Users can\'t follow/unfollow communities they moderate');
+            return;
+        }
+
         if(type === 'community') {
             Community.findOne({
                 _id: target
@@ -36,6 +41,7 @@ app.post('', (req, res) => {
                     console.log('Community doesn\'t exist');
                     return;
                 }
+
 
                 user.followingCommunities.unshift(target);
                 community.followers += 1;

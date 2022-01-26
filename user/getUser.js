@@ -11,7 +11,7 @@ app.post('/:username', (req, res) => {
     let selectQuery;
 
     if(!personalProfile) {
-        selectQuery = 'username comments about friends isAccountPrivate profilePicture';
+        selectQuery = 'username comments about friends isAccountPrivate profilePicture moderatesCommunities';
     } else {
         selectQuery = '-password -email -posts -__v';
     }

@@ -1,8 +1,6 @@
 const express = require('express');
 const app = express();
 
-require('dotenv').config();
-
 const User = require('../models/user');
 
 app.post('', (req, res) => {
@@ -12,7 +10,7 @@ app.post('', (req, res) => {
     User.findOne({
         _id: uId
     })
-    .select('profilePicture')
+    .populate('moderatesCommunities', 'cName')
     .exec((err, user) => {
         if(err) {
             console.log(`Something went wrong: ${err}`);
@@ -23,17 +21,15 @@ app.post('', (req, res) => {
             return;
         }
 
-        if(user.username === uName) {
-            res.end(JSON.stringify({
-                url: user.profilePicture
-            }));
+        if(uName === req.session.uName) {
+            res.end(JSON.stringify(user.moderatesCommunities));
             return;
         }
 
         User.findOne({
             username: uName
         })
-        .select('profilePicture')
+        .populate('moderatesCommunities', 'cName')
         .exec((err, targetUser) => {
             if(err) {
                 console.log(`Something went wrong: ${err}`);
@@ -44,18 +40,24 @@ app.post('', (req, res) => {
                 return;
             }
             
-            if(!targetUser.profilePicture) {
-                res.end(JSON.stringify({
-                    message: 'No profile picture found'
-                }));
-            }
+            let communities = [];
+            targetUser.moderatesCommunities.forEach(c => {
+                let community = {
+                    cId: c._id,
+                    cName: c.cName,
+                    isFollowing: 'no'
+                };
+                console.log(c);
+                if(user.followingCommunities.includes(c._id)) {
+                    community.isFollowing = 'yes';
+                }
 
-            res.end(JSON.stringify({
-                // url: `${process.env.ROOT_URL}/uploads/profilePictures/${targetUser.profilePicture}`
-                url: targetUser.profilePicture
-            }));
+                communities.push(community);
+            });
+
+            res.end(JSON.stringify(communities));
         });
-    });
+    })
 });
 
 module.exports = app;

@@ -35,6 +35,14 @@ const userStructure = {
         type: mongoose.Types.ObjectId,
         ref: 'User'
     }],
+    rooms: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Chat'
+    }],
+    chatUsers: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'User'
+    }],
     pendingFriendRequests: [{
         type: mongoose.Types.ObjectId,
         ref: 'User'

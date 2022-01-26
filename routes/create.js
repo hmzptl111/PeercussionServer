@@ -51,6 +51,9 @@ app.post('/:type', isAuth, async (req, res) => {
                 console.log('Community doesn\'t exist');
                 return;
             }
+
+            if(community.cName !== cName) return;
+
             const thumbnail = req.body.body.blocks.find(block => block.type === 'image');
             let payload;
 
@@ -102,7 +105,7 @@ app.post('/:type', isAuth, async (req, res) => {
 
                     await community.save();
                     await user.save();
-                    res.end(JSON.stringify(newPost));
+                    res.end(JSON.stringify({pId: newPost._id}));
                 })
             })
             .catch(err => {
@@ -189,41 +192,6 @@ app.post('/:type', isAuth, async (req, res) => {
                 })
             }); 
         });
-
-        // Community.findOne({
-        //     cName: cName
-        // }, (err, result) => {
-        //     if(err) {
-        //         console.error(err);
-        //     } else {
-        //         if(!result) {
-        //             const payload = {
-        //                 mId: uId,
-        //                 mName: uName,
-        //                 cName: cName,
-        //                 desc: desc,
-        //                 relatedCommunities: relatedCommunities
-        //             }
-            
-        //             const community = new Community(payload);
-        //             community.save()
-        //                 .then(result => {
-        //                     console.log(result);
-        //                     res.end(result.cName);
-        //                 })
-        //                 .catch(err => {
-        //                     console.log(err);
-        //                     res.status(400);
-        //                     res.end('There was some problem while creating the community, please try again');
-        //                     return;
-        //                 });
-        //         } else {
-        //             res.status(400);
-        //             res.end('Community already exists');
-        //             return;
-        //         }
-        //     }
-        // });
         }
 });
 

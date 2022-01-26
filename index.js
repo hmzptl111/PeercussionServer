@@ -1,11 +1,89 @@
+const {createServer} = require('http'); 
+const {Server} = require('socket.io');
 const express = require('express');
-const app = express();
 require('dotenv').config();
 
 const connectDB = require('./db/database');
 const session = require('express-session');
 const MongoDBSessionStore = require('connect-mongodb-session')(session);
 const cookieParser = require('cookie-parser');
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+
+const Room = require('./models/room');
+
+let socketConnections = [];
+
+io.on('connection', (socket) => {
+    console.log('socket connection established');
+
+    if(!socket.request._query.uName) return;
+
+    socket.data.uId = socket.request._query.uId;
+    socket.data.uName = socket.request._query.uName;
+
+    socketConnections.push(socket.request._query.uId);
+
+    console.log(`${socket.data.uName} connected`);
+
+    socket.on('join', (rooms) => {
+        console.log(`joined rooms: ${rooms}`);
+        socket.join(rooms);   
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`${socket.data.uName} disconnected`);
+        const updatedSocketConnections = socketConnections.filter(s => s !== socket.data.uId);
+        socketConnections = updatedSocketConnections;
+    });
+
+    socket.on('check-user-status', (targetUser) => {
+        if(socketConnections.includes(targetUser)) {
+            socket.emit('user-status', true);
+        } else {
+            socket.emit('user-status', false);
+        }
+    });
+
+    socket.on('message', async (socketMessage, room) => {
+        if(!room) return;
+        
+        const {type, time, message, roomID} = socketMessage;
+
+        const newMessage = {
+            type,
+            time,
+            message,
+            sender: socket.data.uName
+        }
+
+        Room.findOne({
+            _id: roomID
+        })
+        .exec(async (err, targetRoom) => {
+            if(err) {
+                console.log(`Something went wrong: ${err}`);
+                return;
+            }
+            if(!targetRoom) {
+                console.log('Room doesn\'t exist');
+                return;
+            }
+
+            if(!targetRoom.participants.includes(socket.data.uId)) {
+                console.log('Unauthentic request');
+                return;
+            }
+                
+                targetRoom.messages.push(newMessage);
+                await targetRoom.save();
+
+                socket.to(room).emit('message', newMessage);
+            });
+    });
+});
 
 //initializations
 const PORT = process.env.PORT || 3001;
@@ -15,7 +93,7 @@ connectDB(DB_URI)
     .then(res => {
         console.log(res);
         try {
-            app.listen(PORT);
+            httpServer.listen(PORT);
             console.log(`Server live on ${PORT}`);
         } catch(e) {
             console.log(e);
@@ -46,7 +124,13 @@ const getProfilePicture = require('./user/getProfilePicture');
 const setProfilePictureFromCamera = require('./user/setProfilePictureFromCamera');
 const setProfilePictureUsingLocalImage = require('./user/setProfilePictureUsingLocalImage');
 const removeProfilePicture = require('./user/removeProfilePicture');
+const getModeratesCommunities = require('./user/getModeratesCommunities');
+const getFollowingCommunities = require('./user/getFollowingCommunities');
+const getUpvotedPosts = require('./user/getUpvotedPosts');
 
+//chat
+const getChats = require('./chat/getChats');
+const getChatRooms = require('./chat/getChatRooms');
 
 //post
 const post = require('./post/getPost');
@@ -130,3 +214,8 @@ app.use('/setProfilePictureUsingLocalImage', setProfilePictureUsingLocalImage);
 app.use('/removeProfilePicture', removeProfilePicture);
 app.use('/getCommunityThumbnail', getCommunityThumbnail);
 app.use('/setCommunityThumbnail', setCommunityThumbnail);
+app.use('/getModeratesCommunities', getModeratesCommunities);
+app.use('/getFollowingCommunities', getFollowingCommunities);
+app.use('/getUpvotedPosts', getUpvotedPosts);
+app.use('/getChats', getChats);
+app.use('/getChatRooms', getChatRooms);
