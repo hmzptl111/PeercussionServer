@@ -4,7 +4,6 @@ const app = express.Router();
 const Post = require('../models/post');
 const Community = require('../models/community');
 const User = require('../models/user');
-const Moderator = require('../models/moderator');
 
 const isAuth = require('../auth/isAuth');
 
@@ -98,8 +97,6 @@ app.post('/:type', isAuth, async (req, res) => {
 
                     newCommunityPosts.unshift(newPost._id);
                     newUserPosts.unshift(newPost._id);
-                    // newCommunityPosts.splice(0, 0, newPost._id);
-                    // newUserPosts.splice(0, 0, newPost._id);
                     community.posts = newCommunityPosts;
                     user.posts = newUserPosts;
 
@@ -149,7 +146,7 @@ app.post('/:type', isAuth, async (req, res) => {
             Community.findOne({
                 cName: cName
             })
-            .exec((err, community) => {
+            .exec(async (err, community) => {
                 if(err) {
                     console.log(`Something went wrong: ${err}`);
                     return;
@@ -169,27 +166,15 @@ app.post('/:type', isAuth, async (req, res) => {
     
                 const newCommunity = new Community(payload);
                 newCommunity.save()
-                .then(communityResult => {
-                    const payload = {
-                        cId: communityResult._id,
-                        uId: uId
-                    }
-                    const moderator = new Moderator(payload);
-                    moderator.save()
-                    .then(async (moderatorResult) => {
-                        user.moderatesCommunities.unshift(moderatorResult.cId);
-                        await user.save();
-                        res.end(communityResult.cName);
-                    })
-                    .catch(err => {
-                        console.log(`Something went wrong: ${err}`);
-                        return;
-                    });
+                .then(async (newCommunityResponse) => {
+                    user.moderatesCommunities.push(newCommunityResponse._id);
+                    await user.save();
+                    res.end(cName);
                 })
                 .catch(err => {
                     console.log(`Something went wrong: ${err}`);
                     return;
-                })
+                });
             }); 
         });
         }

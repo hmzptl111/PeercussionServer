@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-// require('dotenv').config;
 
 const userStructure = {
     username: {
@@ -55,6 +54,10 @@ const userStructure = {
         type: Boolean,
         default: false
     },
+    isEmailValidated: {
+        type: Boolean,
+        default: false
+    },
     profilePicture: {
         type: String
     },
@@ -81,11 +84,11 @@ const userStructure = {
     followingCommunities: [{
         type: mongoose.Types.ObjectId,
         ref: 'Community'
-    }],
-    restrictedFrom: [{
-        type: mongoose.Types.ObjectId,
-        ref: 'Community'
-    }],
+    }]
+    // restrictedFrom: [{
+    //     type: mongoose.Types.ObjectId,
+    //     ref: 'Community'
+    // }],
 }
 
 const userOptions = {

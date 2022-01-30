@@ -4,8 +4,11 @@ const app = express.Router();
 const Community = require('../models/community');
 
 app.post('/:communityName', (req, res) => {
+    const {communityName} = req.params;
+    const {uId} = req.session;
+
     Community.findOne({
-        cName: req.params.communityName
+        cName: communityName
     })
     .select('-posts')
     .exec((err, community) => {
@@ -17,7 +20,14 @@ app.post('/:communityName', (req, res) => {
             }));
             return;
         }
-        // console.log(community);
+
+        if(community.restrictedUsers.includes(uId)) {
+            res.end(JSON.stringify({
+                error: 'You are restricted from accessing this community'
+            }));
+            return;
+        }
+
         res.end(JSON.stringify(community));
     });
 });

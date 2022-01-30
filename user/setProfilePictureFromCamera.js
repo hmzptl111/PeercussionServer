@@ -9,7 +9,7 @@ const User = require('../models/user');
 
 app.post('', (req, res) => {
     const {profilePicture} = req.body;
-    const {uId, uName} = req.session;
+    const {uId} = req.session;
 
     User.findOne({
         _id: uId

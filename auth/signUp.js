@@ -1,12 +1,13 @@
 const express = require('express');
 const app = express.Router();
 const bcrypt = require('bcrypt');
-const axios = require('axios');
+
+const sendMail = require('../email/sendMail');
 
 const User = require('../models/user');
 
 app.post('', async (req, res) => {
-    const {username, password, email} = req.body;
+    const {username, password, email, about} = req.body;
 
     if(username === '' || password === '' || email === '') {
         res.send(JSON.stringify({
@@ -57,14 +58,17 @@ app.post('', async (req, res) => {
             const payload = {
                 username,
                 password: hashedPassword,
-                email
+                email,
+                about
             };
 
             const user = new User(payload);
             user.save()
                 .then(result => {
+                    sendMail(result._id, result.email);
+
                     res.send(JSON.stringify({
-                        message: `Hello ${result.username}, welcome to Peercussion`
+                        message: `Hello ${result.username}, welcome to Peercussion. An email has been sent to your email account, please make sure you confirm your email address as the token is invalidated after an hour.`
                     }));
                     return;
                 })

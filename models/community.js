@@ -41,13 +41,15 @@ const communityStructure = {
         required: true,
         default: 0
     },
-    relatedCommunities: {
-        type: Array
-    }
-    // relatedCommunities: [{
-    //     type: mongoose.Types.ObjectId,
-    //     ref: 'Community'
-    // }]
+    relatedCommunities: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'Community'
+    }],
+    restrictedUsers: [{
+        type: mongoose.Types.ObjectId,
+        ref: 'User',
+        unique: true
+    }],
 };
 
 const communityOptions = {

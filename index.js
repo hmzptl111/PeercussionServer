@@ -12,39 +12,94 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer);
 
+const User = require('./models/user');
 const Room = require('./models/room');
 
+
+
+
+
+
+
+
+
+
 let socketConnections = [];
+global.socketConnections = socketConnections;
 
 io.on('connection', (socket) => {
     console.log('socket connection established');
 
-    if(!socket.request._query.uName) return;
+    if(!socket.request._query.uId || !socket.request._query.uName) return;
 
     socket.data.uId = socket.request._query.uId;
     socket.data.uName = socket.request._query.uName;
 
-    socketConnections.push(socket.request._query.uId);
+    global.socketConnections.push(socket.request._query.uId.toString());
 
     console.log(`${socket.data.uName} connected`);
 
+    User.findOne({
+        _id: socket.data.uId
+    })
+    .exec((err, user) => {
+        if(err) {
+            console.log(`Something went wrong: ${err}`);
+            return;
+        }
+        if(!user) {
+            console.log('User doesn\'t exist');
+            return;
+        }
+
+        const status = {
+            uId: socket.data.uId,
+            isUserOnline: true
+        }
+
+        let userRooms = [];
+        user.rooms.forEach(r => {
+            userRooms.push(r.toString());
+        });
+
+        socket.to(userRooms).emit('status', status);
+    });
+
     socket.on('join', (rooms) => {
-        console.log(`joined rooms: ${rooms}`);
         socket.join(rooms);   
     });
 
     socket.on('disconnect', () => {
         console.log(`${socket.data.uName} disconnected`);
-        const updatedSocketConnections = socketConnections.filter(s => s !== socket.data.uId);
-        socketConnections = updatedSocketConnections;
-    });
 
-    socket.on('check-user-status', (targetUser) => {
-        if(socketConnections.includes(targetUser)) {
-            socket.emit('user-status', true);
-        } else {
-            socket.emit('user-status', false);
-        }
+        const updatedSocketConnections = global.socketConnections.filter(s => s !== socket.data.uId);
+        global.socketConnections = updatedSocketConnections;
+
+        User.findOne({
+            _id: socket.data.uId
+        })
+        .exec((err, user) => {
+            if(err) {
+                console.log(`Something went wrong: ${err}`);
+                return;
+            }
+            if(!user) {
+                console.log('User doesn\'t exist');
+                return;
+            }
+    
+            const status = {
+                uId: socket.data.uId,
+                isUserOnline: false
+            }
+    
+            let userRooms = [];
+            user.rooms.forEach(r => {
+                userRooms.push(r.toString());
+            });
+
+            socket.to(userRooms).emit('status', status);
+        });
     });
 
     socket.on('message', async (socketMessage, room) => {
@@ -52,12 +107,15 @@ io.on('connection', (socket) => {
         
         const {type, time, message, roomID} = socketMessage;
 
+        if(!message) return;
+
         const newMessage = {
             type,
             time,
             message,
             sender: socket.data.uName
         }
+        console.log(newMessage);
 
         Room.findOne({
             _id: roomID
@@ -85,6 +143,19 @@ io.on('connection', (socket) => {
     });
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 //initializations
 const PORT = process.env.PORT || 3001;
 const DB_URI = process.env.DB_URI;
@@ -107,6 +178,9 @@ connectDB(DB_URI)
 const create = require('./routes/create');
 const search = require('./routes/search');
 
+//mail
+const emailConfirmation = require('./email/confirmMail');
+
 //images
 const postBodyImage = require('./images/postBodyImage');
 
@@ -114,6 +188,8 @@ const postBodyImage = require('./images/postBodyImage');
 const community = require('./community/getCommunity');
 const getCommunityThumbnail = require('./community/getCommunityThumbnail');
 const setCommunityThumbnail = require('./community/setCommunityThumbnail');
+const getRelatedCommunities = require('./community/getRelatedCommunities');
+const getRestrictedUsers = require('./community/getRestrictedUsers');
 
 //user
 const user = require('./user/getUser');
@@ -127,6 +203,9 @@ const removeProfilePicture = require('./user/removeProfilePicture');
 const getModeratesCommunities = require('./user/getModeratesCommunities');
 const getFollowingCommunities = require('./user/getFollowingCommunities');
 const getUpvotedPosts = require('./user/getUpvotedPosts');
+
+//moderator
+const restrictUser = require('./community/restrictUser');
 
 //chat
 const getChats = require('./chat/getChats');
@@ -187,6 +266,7 @@ app.use(session(sessionOptions));
 //
 
 app.use('/create', create);
+app.use('/emailConfirmation', emailConfirmation);
 app.use('/search', search);
 app.use('/images', postBodyImage);
 app.use('/community', community);
@@ -219,3 +299,6 @@ app.use('/getFollowingCommunities', getFollowingCommunities);
 app.use('/getUpvotedPosts', getUpvotedPosts);
 app.use('/getChats', getChats);
 app.use('/getChatRooms', getChatRooms);
+app.use('/restrictUser', restrictUser);
+app.use('/getRelatedCommunities', getRelatedCommunities);
+app.use('/getRestrictedUsers', getRestrictedUsers);

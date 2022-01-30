@@ -30,33 +30,39 @@ app.post('', (req, res) => {
             return;
         }
 
-        if(user) {
-            console.log('---');
-            console.log(user);
-            console.log('---');
-            const response = await bcrypt.compare(password, user.password);
-            if(response) {
-                req.session.isAuth = true;
-                req.session.uId = user._id.toString();
-                req.session.uName = user.username;
-                // res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
-                // res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
-                res.end(JSON.stringify({
-                    message: `Welcome, ${user.username}`
-                }));
-                console.log(req.session);
-            }
-            else {
-                res.status(400);
-                res.end(JSON.stringify({
-                    error: 'Incorrect password'
-                })); 
-            }
-        } else {
+        if(!user) {
             res.status(400);
             res.end(JSON.stringify({
                 error: 'Username doesn\'t exist'
-            }))
+            }));
+        }
+
+        if(!user.isEmailValidated) {
+            res.status(401);
+            res.end(JSON.stringify({
+                error: 'You\'ve not confirmed your email yet. An email has been sent to your email account, please confirm your email address.'
+            }));
+        }
+
+        const response = await bcrypt.compare(password, user.password);
+        if(response) {
+            req.session.isAuth = true;
+            req.session.uId = user._id.toString();
+            req.session.uName = user.username;
+            // res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
+            // res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
+            res.end(JSON.stringify({
+                message: `Welcome, ${user.username}`,
+                uId: req.session.uId.toString(),
+                uName: req.session.uName
+            }));
+            console.log(req.session);
+        }
+        else {
+            res.status(400);
+            res.end(JSON.stringify({
+                error: 'Incorrect password'
+            })); 
         }
     });
 })

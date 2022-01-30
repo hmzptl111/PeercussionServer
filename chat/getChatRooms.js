@@ -5,7 +5,12 @@ const isAuth = require('../auth/isAuth');
 
 const User = require('../models/user');
 
+// const socketConnections = require('../index');
+
 app.post('', isAuth, (req, res) => {
+    console.log(global.socketConnections);
+    if(global.socketConnections === []) return;
+
     const {uId} = req.session;
 
     User.findOne({
@@ -29,11 +34,12 @@ app.post('', isAuth, (req, res) => {
                 uId: user.chatUsers[i]._id,
                 uName: user.chatUsers[i].username,
                 uProfilePicture: user.chatUsers[i].profilePicture,
-                room: user.rooms[i]
+                room: user.rooms[i],
+                isUserOnline: global.socketConnections.includes(user.chatUsers[i]._id.toString()) ? true : false
             };
         }
 
-        console.log(result);
+        // console.log(result);
         res.end(JSON.stringify(result));
     })
 });
