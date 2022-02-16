@@ -12,11 +12,10 @@ app.post('', (req, res) => {
     })
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
@@ -26,11 +25,18 @@ app.post('', (req, res) => {
         .populate('followingCommunities', 'cName')
         .exec((err, targetUser) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+
             if(!targetUser) {
-                console.log('User doesn\'t exist');
+                res.json({
+                    error: 'User does not exist'
+                });
+                res.end();
                 return;
             }
             
@@ -38,20 +44,23 @@ app.post('', (req, res) => {
             targetUser.followingCommunities.forEach(c => {
                 let community = {
                     cId: c._id,
-                    cName: c.cName
+                    cName: c.cName,
+                    isFollowing: 'no'
                 };
-                if(!user.moderatesCommunities.includes(c._id)) {
+                if(user && !user.moderatesCommunities.includes(c._id)) {
                     if(user.followingCommunities.includes(c._id)) {
                         community.isFollowing = 'yes';
-                    } else {
-                        community.isFollowing = 'no';
                     }
                 }
 
                 communities.push(community);
             });
 
-            res.end(JSON.stringify(communities));
+            // res.end(JSON.stringify(communities));
+            res.json({
+                message: communities
+            });
+            res.end();
         });
     })
 });

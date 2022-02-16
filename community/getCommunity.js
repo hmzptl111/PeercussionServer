@@ -13,22 +13,26 @@ app.post('/:communityName', (req, res) => {
     .select('-posts')
     .exec((err, community) => {
         if(err) {
-            console.log(err);
-            res.status(400);
-            res.end(JSON.stringify({
-                error: `Something went wrong: ${err}`
-            }));
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
         if(community.restrictedUsers.includes(uId)) {
-            res.end(JSON.stringify({
-                error: 'You are restricted from accessing this community'
-            }));
+            res.json({
+                error: 'restricted'
+            });
+            res.end();
             return;
         }
 
-        res.end(JSON.stringify(community));
+        res.json({
+            message: community
+        });
+        res.end();
+        return;
     });
 });
 

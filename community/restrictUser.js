@@ -3,7 +3,9 @@ const app = express.Router();
 
 const Community = require('../models/community');
 
-app.post('/:action', (req, res) => {
+const isAuth = require('../auth/isAuth');
+
+app.post('/:action', isAuth, (req, res) => {
     const {uId} = req.session;
     const {action} = req.params;
     const {restrictUId, cName} = req.body;
@@ -13,18 +15,26 @@ app.post('/:action', (req, res) => {
     })
     .exec(async (err, community) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
+
         if(!community) {
-            console.log('Community doesn\'t exist');
+            res.json({
+                error: 'Community does not exist'
+            });
+            res.end();
             return;
         }
+
         if(community.mId.toString() !== uId) {
-            res.status(401);
-            res.end(JSON.stringify({
-                message: 'Unauthentic request'
-            }));
+            res.json({
+                error: 'Unauthentic request, only moderators can restrict/unrestrict users'
+            });
+            res.end();
             return;
         }
 
@@ -37,9 +47,7 @@ app.post('/:action', (req, res) => {
             await community.save();
         }
 
-        res.end(JSON.stringify({
-            message: `User ${action === 'restrict' ? 'restricted': 'unrestricted'}`
-        }));
+        res.end();
     });
 });
 

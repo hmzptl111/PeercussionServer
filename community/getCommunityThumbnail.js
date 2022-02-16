@@ -12,17 +12,24 @@ app.post('', (req, res) => {
     .select('cThumbnail')
     .exec((err, community) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
         if(!community) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: 'Community does not exist'
+            });
+            res.end();
             return;
         }
 
-        res.end(JSON.stringify({
-            url: community.cThumbnail
-        }));
+        res.json({
+            message: community.cThumbnail
+        });
+        res.end();
         return;
     });
 });

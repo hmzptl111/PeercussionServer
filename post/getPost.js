@@ -8,22 +8,26 @@ app.post('/:pId', (req, res) => {
         _id: req.params.pId
     }, (err, post) => {
         if(err) {
-            console.log(err);
-            res.status(400);
-            res.end(JSON.stringify({
-                error: 'Something went wrong'
-            }));
-        } else {
-            if(post) {
-                console.log(post);
-                res.end(JSON.stringify(post));
-            } else {
-                res.status(400);
-                res.end(JSON.stringify({
-                    error: 'Couldn\'t find post'
-                }));
-            }
+            res.json({
+                error: err
+            });
+            res.end();
+            return;
         }
+
+        if(!post) {
+            res.json({
+                error: 'Could not find post'
+            });
+            res.end();
+            return;
+        }
+
+        res.json({
+            message: post
+        });
+        res.end();
+        return;
     }).select('-comments');
 });
 

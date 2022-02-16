@@ -4,8 +4,9 @@ const app = express();
 const User = require('../models/user');
 const Chat = require('../models/room');
 
+const isAuth = require('../auth/isAuth');
 
-app.post('', (req, res) => {
+app.post('', isAuth, (req, res) => {
     const {target} = req.body;
     const {uId} = req.session;
 
@@ -14,11 +15,10 @@ app.post('', (req, res) => {
     })
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
@@ -27,11 +27,18 @@ app.post('', (req, res) => {
         })
         .exec((err, targetUser) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+
             if(!targetUser) {
-                console.log('User doesn\'t exist');
+                res.json({
+                    error: 'User does not exist'
+                });
+                res.end();
                 return;
             }
 
@@ -65,12 +72,13 @@ app.post('', (req, res) => {
                 await targetUser.save();
                 await user.save();
     
-                res.end(JSON.stringify({
-                    message: 'Friend request accepted'
-                }));
+                res.end();
             })
             .catch(err => {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             })
         });

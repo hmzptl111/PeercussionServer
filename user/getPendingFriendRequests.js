@@ -3,7 +3,9 @@ const app = express();
 
 const User = require('../models/user');
 
-app.use('', (req, res) => {
+const isAuth = require('../auth/isAuth');
+
+app.use('', isAuth, (req, res) => {
     const {uId} = req.session;
 
     User.findOne({
@@ -12,16 +14,19 @@ app.use('', (req, res) => {
     .populate('pendingFriendRequests', 'username')
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong:; ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
-        console.log(user);
-        res.end(JSON.stringify(user.pendingFriendRequests));
+        // res.end(JSON.stringify(user.pendingFriendRequests));
+        res.json({
+            message: user.pendingFriendRequests
+        });
+        res.end();
+        return;
     });
 });
 

@@ -5,36 +5,43 @@ const fs = require('fs');
 
 const User = require('../models/user');
 
-app.post('', (req, res) => {
-    const {uId, uName} = req.session;
+const isAuth = require('../auth/isAuth');
+
+app.post('', isAuth, (req, res) => {
+    const {uId} = req.session;
 
     User.findOne({
         _id: uId
     })
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
-        fs.unlink(`./uploads/profilePictures/${uName}.png`, async (err) => {
-            if(err && err.code == 'ENOENT') {
-                console.info('File doesn\'t exist');
+        fs.unlink(`./uploads/profilePictures/${user.profilePicture}`, async (err) => {
+            if(err) {
+                if(err.code === 'ENOENT') {
+                    res.json({
+                        error: 'Image does not exist'
+                    });
+                    res.end();
+                    return;
+                }
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
-            } else if (err) {
-                console.log(`Something went wrong: ${err}`);
-                return;
-            } 
+            }
 
             user.profilePicture = undefined;
             await user.save();
-            res.end(JSON.stringify({
-                message: 'Profile picture removed'
-            }));
+            
+            res.end();
         });
     });
 });

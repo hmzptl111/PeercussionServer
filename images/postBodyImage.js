@@ -39,7 +39,6 @@ app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
         const result = {
                 success: 1,
                 file: {
-                    // url: `${process.env.ROOT_URL}/uploads/postImages/${req.file.filename}`
                     url: `/uploads/postImages/${req.file.filename}`
                 }
             };
@@ -63,7 +62,6 @@ app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
                         const result = {
                             success: 1,
                             file: {
-                                // url: `${process.env.ROOT_URL}/uploads/postImages/${filename}`
                                 url: `/uploads/postImages/${filename}`
                             }
                         };
@@ -82,7 +80,6 @@ app.post('/:type', upload.single('postBodyImage'), async (req, res) => {
                             success: 1,
                             file: {
                                 url: `/uploads/postImages/${filename}`
-                                // url: `${process.env.ROOT_URL}/uploads/postImages/${filename}`
                             }
                         };
                         res.end(JSON.stringify(result));

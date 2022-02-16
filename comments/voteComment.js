@@ -1,18 +1,23 @@
 const express = require('express');
 const app = express();
 
-const Post = require('../models/post');
+// const Post = require('../models/post');
 const User = require('../models/user');
 const Comment = require('../models/comment');
 
-app.put('', (req, res) => {
+const isAuth = require('../auth/isAuth');
+
+app.put('', isAuth, (req, res) => {
     if(req.body.vote === 'upvote') {
         User
         .findOne({_id: req.session.uId})
         .select('upvotedComments downvotedComments')
         .exec((err, user) => {
             if(err) {
-                console.log(err);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
             Comment
@@ -21,9 +26,13 @@ app.put('', (req, res) => {
             .exec(async (err, comment) => {
                 let code;
                 if(err) {
-                    console.log(err);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
+
                 const isCommentAlreadyUpvoted = user.upvotedComments.some(cId => (
                     cId.toString() === req.body.cId
                 ));
@@ -54,12 +63,11 @@ app.put('', (req, res) => {
                 await user.save();
                 await comment.save();
 
-                res.end(JSON.stringify({
-                    code: code
-                }));
-                // res.end(JSON.stringify({
-                //     message: 'Post upvoted'
-                // }));
+                res.json({
+                    message: code
+                });
+                res.end();
+                return;
             });
         });
     } else if(req.body.vote === 'downvote') {
@@ -68,16 +76,23 @@ app.put('', (req, res) => {
         .select('upvotedComments downvotedComments')
         .exec((err, user) => {
             if(err) {
-                console.log(err);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+
             Comment
             .findOne({_id: req.body.cId})
             .select('upvotes downvotes')
             .exec(async (err, comment) => {
                 let code;
                 if(err) {
-                    console.log(err);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
                 const isCommentAlreadyDownvoted = user.downvotedComments.some(cId => (
@@ -110,12 +125,11 @@ app.put('', (req, res) => {
                 await user.save();
                 await comment.save();
                 
-                res.end(JSON.stringify({
-                    code: code
-                }));
-                // res.end(JSON.stringify({
-                //     message: 'Post downvoted'
-                // }));
+                res.json({
+                    message: code
+                });
+                res.end();
+                return;
             });
         });
     }

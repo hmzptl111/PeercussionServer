@@ -5,8 +5,9 @@ const Post = require('../models/post');
 const User = require('../models/user');
 const Comment = require('../models/comment');
 
-app.post('', (req, res) => {
-    console.log('creating comment');
+const isAuth = require('../auth/isAuth');
+
+app.post('', isAuth, (req, res) => {
     const {pId, pTitle, cId, cName, comment, replyTo} = req.body;
     const {uId, uName} = req.session;
 
@@ -15,11 +16,10 @@ app.post('', (req, res) => {
     })
     .exec((err, user) => {
         if(err) {
-            console.log('Something went wrong');
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
        
@@ -44,20 +44,32 @@ app.post('', (req, res) => {
                 })
                 .exec(async (err, replyToComment) => {
                     if(err) {
-                        console.log(`Something went wrong: ${err}`);
+                        res.json({
+                            error: err
+                        });
+                        res.end();
                         return;
                     }
+
                     if(!replyToComment) {
-                        console.log('Comment doesn\'t exist');
+                        res.json({
+                            error: 'Comment does not exist'
+                        });
+                        res.end();
                         return;
                     }
+
                     replyToComment.replies.push(comment._id);
                     user.comments.push(comment._id);
                     
                     await replyToComment.save();
                     await user.save();
 
-                    res.end(JSON.stringify(comment));
+                    res.json({
+                        message: comment
+                    });
+                    res.end();
+                    return;
                 });
             } else {
                 Post.findOne({
@@ -65,26 +77,41 @@ app.post('', (req, res) => {
                 })
                 .exec(async (err, post) => {
                     if(err) {
-                        console.log(`Something went wrong: ${err}`);
+                        res.json({
+                            error: err
+                        });
+                        res.end();
                         return;
                     }
+
                     if(!post) {
-                        console.log('Post doesn\'t exist');
+                        res.json({
+                            error: 'Post does not exist'
+                        });
+                        res.end();
                         return;
                     }
 
                     post.totalComments += 1;
                     post.comments.push(comment._id);
                     user.comments.push(comment._id);
+
                     await post.save();
                     await user.save();
                     
-                    res.end(JSON.stringify(comment));
+                    res.json({
+                        message: comment
+                    });
+                    res.end();
+                    return;
                 });
             }
         })
         .catch(err => {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         });
     });

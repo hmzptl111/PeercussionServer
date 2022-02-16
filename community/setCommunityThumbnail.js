@@ -46,28 +46,44 @@ app.post('', isAuth, upload.single('communityThumbnail'), (req, res) => {
     })
     .exec(async (err, community) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
+
         if(!community) {
-            console.log('Community doesn\'t exist');
+            res.json({
+                error: 'Community does not exist'
+            });
+            res.end();
             return;
         }
 
         const isModerator = community.mId.toString() === uId;
             if(!isModerator) {
-                console.log('Only moderators can update community thumbnail');
+                res.json({
+                    error: 'Unauthentic request, you are not the moderator'
+                });
+                res.end();
                 return;
             }
 
             if(community.cThumbnail) {
                 console.log(community.cThumbnail);
                 fs.unlink(`./uploads/communityThumbnails/${community.cThumbnail}`, async (err) => {
-                    if(err && err.code == 'ENOENT') {
-                        console.info('File doesn\'t exist');
+                    if(err && err.code === 'ENOENT') {
+                        res.json({
+                            error: 'Image does not exist'
+                        });
+                        res.end();
                         return;
                     } else if (err) {
-                        console.log(`Something went wrong: ${err}`);
+                        res.json({
+                            error: err
+                        });
+                        res.end();
                         return;
                     } 
                 });
@@ -76,9 +92,7 @@ app.post('', isAuth, upload.single('communityThumbnail'), (req, res) => {
             community.cThumbnail = req.file.filename;
             await community.save();
     
-            res.end(JSON.stringify({
-                message: 'Community thumbnail updated'
-            }));
+            res.end();
             return;
     });
 });

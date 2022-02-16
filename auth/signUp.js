@@ -6,13 +6,16 @@ const sendMail = require('../email/sendMail');
 
 const User = require('../models/user');
 
-app.post('', async (req, res) => {
+app.post('', (req, res) => {
     const {username, password, email, about} = req.body;
 
+    console.log('create account');
+
     if(username === '' || password === '' || email === '') {
-        res.send(JSON.stringify({
-            error: 'Necessary information not provided for account creation'
-        }));
+        res.json({
+            error: 'Some or all the required fields are empty'
+        });
+        res.end();
         return;
     }
     
@@ -20,72 +23,79 @@ app.post('', async (req, res) => {
     //if username starts with a digit like 3hamza, it is invalid
     const usernameRegex = /^[^\d][\w]+$/;
     if(!usernameRegex.test(username)) {
-        res.send(JSON.stringify({
-            error: 'Username must only consist of, lowercase characters; uppercase characters; digits; underscores and must not start with a digit'
-        }));
+        res.json({
+            error: 'Invalid username'
+        });
+        res.end();
         return;
     }
 
-
-    //can't write a freaking regex for password, so just leaving as is, for now
-    // const passwordRegex = ;
-    // if(!passwordRegex.test(password)) {
-    //     res.send(JSON.stringify({
-    //         error: 'Password must contain at least one lowercase character, one uppercase character and one digit'
-    //     }));
-    // }
+    const passwordRegex = /^(?=.{8,})(?=.*[a-z])(?=.*[A-Z])(?=.*[~!@#$%^&*]).*$/;
+    if(!passwordRegex.test(password)) {
+        res.json({
+            error: 'Invalid password'
+        });
+        res.end();
+        return;
+    }
     
-    //to actually validate user email, send a mail to the user entered mail
     const emailRegex = /\S+@\S+\.\S+/;
     if(!emailRegex.test(email)) {
-        res.send(JSON.stringify({
+        res.json({
             error: 'Invalid email'
-        }));
+        });
+        res.end();
         return;
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     User.findOne({
-        username: username
-        //no need to look for emails, they are set to unique in model
-        // $or: [
-        //     {username: username},
-        //     {email: email}
-        // ]
-    }, (err, user) => {
-        if(err) console.log(err);
-        if(!user) {
-            const payload = {
-                username,
-                password: hashedPassword,
-                email,
-                about
-            };
-
-            const user = new User(payload);
-            user.save()
-                .then(result => {
-                    sendMail(result._id, result.email);
-
-                    res.send(JSON.stringify({
-                        message: `Hello ${result.username}, welcome to Peercussion. An email has been sent to your email account, please make sure you confirm your email address as the token is invalidated after an hour.`
-                    }));
-                    return;
-                })
-                .catch(err => {
-                    // res.status(400);
-                    res.send(JSON.stringify({
-                        error: `Something went wrong: ${err}`
-                    }));
-                    return;
-                })
-        } else {
-            // res.status(400);
-            res.send(JSON.stringify({
-                error: 'Username already taken'
-            }));
+        $or: [
+            {username: username},
+            {email: email}
+        ]
+    }, async (err, user) => {
+        if(err) {
+            res.json({
+                error: `Something went wrong: ${err}`
+            });
+            res.end();
             return;
         }
+        if(user) {
+            res.json({
+                error: 'Username or email already in use'
+            });
+            res.end();
+            return;
+        }
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const payload = {
+            username,
+            password: hashedPassword,
+            email,
+            about
+        };
+
+        const newUser = new User(payload);
+        newUser.save()
+        .then(result => {
+            const {_id, email, username} = result;
+            // sendMail(_id, email);
+
+            res.json({
+                message: `Hello ${username}, welcome to Peercussion. An email has been sent to your account, please verify your email to sign in.`
+            });
+            res.end();
+            return;
+        })
+        .catch(err => {
+            res.json({
+                error: `Something went wrong: ${err}`
+            });
+            res.end();
+            return;
+        });
     });
 });
 

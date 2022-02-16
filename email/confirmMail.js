@@ -17,11 +17,18 @@ app.get('/:token', (req, res) => {
     .select('isEmailValidated')
     .exec(async (err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
+
         if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: 'User doesn not exist'
+            });
+            res.end();
             return;
         }
 

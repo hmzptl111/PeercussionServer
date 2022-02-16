@@ -13,16 +13,18 @@ app.post('', (req, res) => {
     .populate('moderatesCommunities', 'cName')
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
         if(uName === req.session.uName) {
-            res.end(JSON.stringify(user.moderatesCommunities));
+            res.json({
+                message: user.moderatesCommunities
+            });
+            res.end();
             return;
         }
 
@@ -32,11 +34,18 @@ app.post('', (req, res) => {
         .populate('moderatesCommunities', 'cName')
         .exec((err, targetUser) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+            
             if(!targetUser) {
-                console.log('User doesn\'t exist');
+                res.json({
+                    error: 'User does not exist'
+                });
+                res.end();
                 return;
             }
             
@@ -48,14 +57,18 @@ app.post('', (req, res) => {
                     isFollowing: 'no'
                 };
                 console.log(c);
-                if(user.followingCommunities.includes(c._id)) {
+                if(user && user.followingCommunities.includes(c._id)) {
                     community.isFollowing = 'yes';
                 }
 
                 communities.push(community);
             });
 
-            res.end(JSON.stringify(communities));
+            res.json({
+                message: communities
+            });
+            res.end();
+            return;
         });
     })
 });

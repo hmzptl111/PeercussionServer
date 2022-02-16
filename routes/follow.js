@@ -4,27 +4,37 @@ const app = express();
 const Community = require('../models/community');
 const User = require('../models/user');
 
-app.post('', (req, res) => {
+const isAuth = require('../auth/isAuth');
+
+app.post('', isAuth, (req, res) => {
     const {type, target} = req.body;
     const {uId} = req.session;
 
-    if(uId === target) return;
+    if(uId === target) {
+        res.json({
+            error: 'Unfortunately, you cannot follow yourself, how sad?'
+        });
+        res.end();
+        return;
+    }
 
     User.findOne({
         _id: uId
     })
     .exec(async (err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
         if(user.moderatesCommunities.includes(target)) {
-            console.log('Users can\'t follow/unfollow communities they moderate');
+            res.json({
+                error: 'Moderators cannot follow communities they moderate'
+            });
+            res.end();
             return;
         }
 
@@ -34,11 +44,18 @@ app.post('', (req, res) => {
             })
             .exec(async (err, community) => {
                 if(err) {
-                    console.log(`Something went wrong: ${err}`);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
+
                 if(!community) {
-                    console.log('Community doesn\'t exist');
+                    res.json({
+                        error: 'Community does not exist'
+                    });
+                    res.end();
                     return;
                 }
 
@@ -49,23 +66,26 @@ app.post('', (req, res) => {
                 await community.save();
                 await user.save();
 
-                res.end(JSON.stringify({
-                    message: 'Community followed'
-                }));
+                res.end();
             });
         } else if(type === 'user') {
-            console.log(user.friends);
-
             User.findOne({
                 _id: target
             })
             .exec(async (err, targetUser) => {
                 if(err) {
-                    console.log(`Something went wrong: ${err}`);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
+
                 if(!targetUser) {
-                    console.log('User doesn\'t exist');
+                    res.json({
+                        error: 'User does not exist'
+                    });
+                    res.end();
                     return;
                 }
 
@@ -75,9 +95,7 @@ app.post('', (req, res) => {
                 await targetUser.save();
                 await user.save();
                 
-                res.end(JSON.stringify({
-                    message: 'Request sent'
-                }));
+                res.end();
             });
         }
     });

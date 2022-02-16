@@ -9,10 +9,11 @@ app.post('', (req, res) => {
     const {username, password} = req.body;
 
     if(username === '' || password === '') {
-        res.status(400);
-        res.end(JSON.stringify({
-            error: 'Necessary information not provided for signing in'
-        }));
+        res.json({
+            error: 'Some or all the required fields are empty'
+        });
+        res.end();
+        return;
     }
 
     User.findOne({
@@ -23,47 +24,50 @@ app.post('', (req, res) => {
         ]
     }, async (err, user) => {
         if(err) {
-            res.status(400);
-            res.end(JSON.stringify({
+            res.json({
                 error: `Something went wrong: ${err}`
-            }));
+            });
+            res.end();
             return;
         }
 
         if(!user) {
-            res.status(400);
-            res.end(JSON.stringify({
-                error: 'Username doesn\'t exist'
-            }));
+            res.json({
+                error: 'Username or email doesn\'t exist'
+            })
+            res.end();
+            return;
         }
 
         if(!user.isEmailValidated) {
-            res.status(401);
-            res.end(JSON.stringify({
-                error: 'You\'ve not confirmed your email yet. An email has been sent to your email account, please confirm your email address.'
-            }));
+            res.json({
+                error: 'To sign in, you must verify your email account. A verification email has been sent to you, please check your index'
+            });
+            res.end();
+            return;
         }
 
         const response = await bcrypt.compare(password, user.password);
-        if(response) {
-            req.session.isAuth = true;
-            req.session.uId = user._id.toString();
-            req.session.uName = user.username;
-            // res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
-            // res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
-            res.end(JSON.stringify({
-                message: `Welcome, ${user.username}`,
-                uId: req.session.uId.toString(),
-                uName: req.session.uName
-            }));
-            console.log(req.session);
+        if(!response) {
+            res.json({
+                error: 'Username or password incorrect'
+            });
+            res.end();
+            return;
         }
-        else {
-            res.status(400);
-            res.end(JSON.stringify({
-                error: 'Incorrect password'
-            })); 
-        }
+
+        req.session.isAuth = true;
+        req.session.uId = user._id.toString();
+        req.session.uName = user.username;
+        // res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
+        // res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
+        console.log(req.session);
+        res.json({
+            message: `Hello, ${user.username}. Welcome back to Peercussion`,
+            uId: req.session.uId.toString(),
+            uName: req.session.uName
+        });
+        res.end();
     });
 })
 

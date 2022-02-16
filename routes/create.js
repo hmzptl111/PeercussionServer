@@ -16,11 +16,20 @@ app.post('/:type', isAuth, async (req, res) => {
     if(req.params.type === 'post') {
         const {uId, uName} = req.session;
         const {cId, cName, title, body} = req.body;
-        console.log('creating a post');
 
-        if(req.body.title === '') {
-            res.status(400);
-            res.end('Community name can\'t be empty');
+        if(title === '') {
+            res.json({
+                error: 'Post title cannot be empty'
+            });
+            res.end();
+            return;
+        }
+
+        if(cId === '') {
+            res.json({
+                error: 'Please choose a valid community to post'
+            });
+            res.end();
             return;
         }
 
@@ -29,11 +38,10 @@ app.post('/:type', isAuth, async (req, res) => {
         })
         .exec((err, user) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
-                return;
-            }
-            if(!user) {
-                console.log('User doesn\'t exist');
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
 
@@ -41,92 +49,90 @@ app.post('/:type', isAuth, async (req, res) => {
             _id: cId
         })
         .exec((err, community) => {
-
             if(err) {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
             if(!community) {
-                console.log('Community doesn\'t exist');
+                res.json({
+                    error: 'Community does not exist'
+                });
+                res.end();
                 return;
             }
 
-            if(community.cName !== cName) return;
-
-            const thumbnail = req.body.body.blocks.find(block => block.type === 'image');
-            let payload;
-
-            if(thumbnail) {
-                payload = {
-                    uId: uId,
-                    uName: uName,
-                    cId: cId,
-                    cName: cName,
-                    title: title,
-                    body: body,
-                    thumbnail: thumbnail.data.file.url
-                }
-            } else {
-                payload = {
-                    uId: uId,
-                    uName: uName,
-                    cId: cId,
-                    cName: cName,
-                    title: title,
-                    body: body
-                }
+            const thumbnail = req.body.body.blocks && req.body.body.blocks.find(block => block.type === 'image');
+            let payload = {
+                uId: uId,
+                uName: uName,
+                cId: cId,
+                cName: cName,
+                title: title,
+                body: body,
+                thumbnail: thumbnail && thumbnail.data.file.url
             }
 
             const post = new Post(payload)
             post.save()
-            .then(newPost => {
-                Community.findOne({
-                    _id: cId
-                })
-                .exec(async (err, community) => {
-                    if(err) {
-                        console.log(`Something went wrong: ${err}`);
-                        return;
-                    }
-                    if(!community) {
-                        console.log('Community doesn\'t exist');
-                        return;
-                    }
-                    let newCommunityPosts = community.posts;
-                    let newUserPosts = user.posts;
+            .then(async (newPost) => {
+                let newCommunityPosts = community.posts;
+                let newUserPosts = user.posts;
 
-                    newCommunityPosts.unshift(newPost._id);
-                    newUserPosts.unshift(newPost._id);
-                    community.posts = newCommunityPosts;
-                    user.posts = newUserPosts;
+                newCommunityPosts.unshift(newPost._id);
+                newUserPosts.unshift(newPost._id);
+                community.posts = newCommunityPosts;
+                user.posts = newUserPosts;
 
-                    await community.save();
-                    await user.save();
-                    res.end(JSON.stringify({pId: newPost._id}));
-                })
-            })
-            .catch(err => {
-                console.log(`Something went wrong: ${err}`);
+                await community.save();
+                await user.save();
+                res.json({
+                    message: newPost._id
+                });
+                res.end();
                 return;
             })
+            .catch(err => {
+                res.json({
+                    error: err
+                });
+                res.end();
+                return;
+            });
         });
     });
     } else if(req.params.type === 'community') {
         const {cName, desc, relatedCommunities} = req.body;
         const {uId, uName} = req.session;
 
-        console.log('creating a community');
-
         if(cName === '') {
-            res.status(400);
-            res.end('Community name can\'t be empty');
+            // res.status(400);
+            // res.end('Community name can\'t be empty');
+            res.json({
+                error: 'Community name cannot be empty'
+            });
+            res.end();
+            return;
+        }
+
+        if(desc.length > 255) {
+            res.json({
+                error: 'Community description should not exceed 255 characters'
+            });
+            res.end();
             return;
         }
 
         const isInvalid = containsSpecialChar(cName);
         if(isInvalid) {
-            res.status(400);
-            res.end('Special characters aren\'t allowed');
+            // res.status(400);
+            // res.end('Special characters aren\'t allowed');
+            res.json({
+                error: 'Special characters are invalid'
+            });
+            res.end();
             return;
         }
 
@@ -135,11 +141,11 @@ app.post('/:type', isAuth, async (req, res) => {
         })
         .exec((err, user) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
-                return;
-            }
-            if(!user) {
-                console.log('User doesn\'t exist');
+                console.log(err);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
 
@@ -148,11 +154,17 @@ app.post('/:type', isAuth, async (req, res) => {
             })
             .exec(async (err, community) => {
                 if(err) {
-                    console.log(`Something went wrong: ${err}`);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
                 if(community) {
-                    console.log('Community already exists');
+                    res.json({
+                        error: 'Community name already in use'
+                    });
+                    res.end();
                     return;
                 }
     
@@ -169,10 +181,17 @@ app.post('/:type', isAuth, async (req, res) => {
                 .then(async (newCommunityResponse) => {
                     user.moderatesCommunities.push(newCommunityResponse._id);
                     await user.save();
-                    res.end(cName);
+                    res.json({
+                        message: cName
+                    });
+                    res.end();
+                    return;
                 })
                 .catch(err => {
-                    console.log(`Something went wrong: ${err}`);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 });
             }); 

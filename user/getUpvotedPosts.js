@@ -20,21 +20,25 @@ app.post('', (req, res) => {
     })
     .exec((err, user) => {
         if(err) {
-            res.status(400);
-            res.end(JSON.stringify({
-                error: `Something went wrong: ${err}`
-            }));
-            return;
-        }
-        if(!user) {
-            console.log('Community doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
-        if(user.upvotedPosts.length < 3) {
-            console.log('no more posts available');
+        if(!user) {
+            res.json({
+                error: 'User does not exist'
+            });
+            res.end();
+            return;
         }
-        res.end(JSON.stringify(user.upvotedPosts));
+
+        res.json({
+            message: user.upvotedPosts
+        });
+        res.end();
         return;
     });
 });

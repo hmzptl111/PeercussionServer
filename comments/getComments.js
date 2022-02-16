@@ -6,46 +6,63 @@ const Comment = require('../models/comment');
 
 app.post('', (req, res) => {
     if(req.body.replyTo !== undefined) {
-        console.log('replyTo');
+        const {replyTo} = req.body;
+
         Comment.findOne({
-            _id: req.body.replyTo
+            _id: replyTo
         })
         .populate('replies')
         .exec((err, comment) => {
             if(err) {
-                console.log(err);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+
             if(!comment) {
-                console.log('Something went wrong');
+                res.json({
+                    error: 'Could not find comment'
+                });
+                res.end();
                 return;
             }
-            console.log(comment.replies);
-            res.end(JSON.stringify(comment.replies));
+
+            res.json({
+                message: comment.replies
+            });
+            res.end();
             return;
         });
     } else {
-        console.log('no replyTo');
-        console.log(req.body.pId);
-        console.log(req.body.commentsOffset);
+        const {pId, commentsOffset} = req.body;
+
         Post.findOne({
-            _id: req.body.pId
+            _id: pId
         })
         .select('-_id comments')
         .populate({
             path: 'comments',
             options: {
                 limit: 3,
-                skip: req.body.commentsOffset
+                skip: commentsOffset
             }
         })
         .exec((err, post) => {
             if(err) {
-                console.log('Something went wrong');
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
-            console.log(post.comments);
-            res.end(JSON.stringify(post.comments));
+            
+            res.json({
+                message: post.comments
+            });
+            res.end();
+            return;
         });
     }
 });

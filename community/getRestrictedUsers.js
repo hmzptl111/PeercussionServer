@@ -12,15 +12,24 @@ app.post('', (req, res) => {
     .populate('restrictedUsers', 'username')
     .exec((err, community) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
         if(!community) {
-            console.log('Community doesn\'t exist');
+            res.json({
+                error: 'Community does not exist'
+            });
+            res.end();
             return;
         }
 
-        res.end(JSON.stringify(community.restrictedUsers));
+        res.json({
+            message: community.restrictedUsers
+        });
+        res.end();
     });
 });
 

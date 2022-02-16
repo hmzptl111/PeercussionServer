@@ -4,25 +4,35 @@ const app = express();
 const Post = require('../models/post');
 const User = require('../models/user');
 
-app.put('', (req, res) => {
+const isAuth = require('../auth/isAuth');
+
+app.put('', isAuth, (req, res) => {
     if(req.body.vote === 'upvote') {
         User
         .findOne({_id: req.session.uId})
         .select('upvotedPosts downvotedPosts')
         .exec((err, user) => {
             if(err) {
-                console.log(err);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+
             Post
             .findOne({_id: req.body.pId})
             .select('upvotes downvotes')
             .exec(async (err, post) => {
-                let code;
-                if(err) {
-                    console.log(err);
+                    let code;
+                    if(err) {
+                        res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
+
                 const isPostAlreadyUpvoted = user.upvotedPosts.some(pId => (
                     pId.toString() === req.body.pId
                 ));
@@ -53,12 +63,11 @@ app.put('', (req, res) => {
                 await user.save();
                 await post.save();
 
-                res.end(JSON.stringify({
-                    code: code
-                }));
-                // res.end(JSON.stringify({
-                //     message: 'Post upvoted'
-                // }));
+                res.json({
+                    message: code
+                });
+                res.end();
+                return;
             });
         });
     } else if(req.body.vote === 'downvote') {
@@ -67,7 +76,10 @@ app.put('', (req, res) => {
         .select('upvotedPosts downvotedPosts')
         .exec((err, user) => {
             if(err) {
-                console.log(err);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
             Post
@@ -76,7 +88,10 @@ app.put('', (req, res) => {
             .exec(async (err, post) => {
                 let code;
                 if(err) {
-                    console.log(err);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 }
                 const isPostAlreadyDownvoted = user.downvotedPosts.some(pId => (
@@ -109,12 +124,11 @@ app.put('', (req, res) => {
                 await user.save();
                 await post.save();
                 
-                res.end(JSON.stringify({
-                    code: code
-                }));
-                // res.end(JSON.stringify({
-                //     message: 'Post downvoted'
-                // }));
+                res.json({
+                    message: code
+                });
+                res.end();
+                return;
             });
         });
     }

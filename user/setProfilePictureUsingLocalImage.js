@@ -8,6 +8,8 @@ const uuidv4 = require('uuid').v4;
 
 const User = require('../models/user');
 
+const isAuth = require('../auth/isAuth');
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, './uploads/profilePictures');
@@ -35,7 +37,7 @@ const upload = multer({
     fileFilter: imageFilters
 });
 
-app.post('', upload.single('profilePictureUsingLocalImage'), (req, res) => {
+app.post('', isAuth, upload.single('profilePictureUsingLocalImage'), (req, res) => {
     const {uId} = req.session;
 
     User.findOne({
@@ -43,22 +45,26 @@ app.post('', upload.single('profilePictureUsingLocalImage'), (req, res) => {
     })
     .exec(async (err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
         if(user.profilePicture) {
-            console.log(user.profilePicture);
             fs.unlink(`./uploads/profilePictures/${user.profilePicture}`, async (err) => {
                 if(err && err.code == 'ENOENT') {
-                    console.info('File doesn\'t exist');
+                    res.json({
+                        error: 'Image does not exist'
+                    });
+                    res.end();
                     return;
                 } else if (err) {
-                    console.log(`Something went wrong: ${err}`);
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
                 } 
             });
@@ -67,9 +73,7 @@ app.post('', upload.single('profilePictureUsingLocalImage'), (req, res) => {
         user.profilePicture = req.file.filename;
         await user.save();
 
-        res.end(JSON.stringify({
-            message: 'Profile picture updated'
-        }));
+        res.end();
         return;
     })
 });

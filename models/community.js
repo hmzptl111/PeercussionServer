@@ -47,8 +47,7 @@ const communityStructure = {
     }],
     restrictedUsers: [{
         type: mongoose.Types.ObjectId,
-        ref: 'User',
-        unique: true
+        ref: 'User'
     }],
 };
 

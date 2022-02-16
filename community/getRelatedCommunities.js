@@ -14,11 +14,10 @@ app.post('', (req, res) => {
     })
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
@@ -28,11 +27,18 @@ app.post('', (req, res) => {
         .populate('relatedCommunities', 'cName')
         .exec((err, targetCommunity) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
+
             if(!targetCommunity) {
-                console.log('Community doesn\'t exist');
+                res.json({
+                    error: 'Community does not exist'
+                });
+                res.end();
                 return;
             }
             
@@ -41,24 +47,23 @@ app.post('', (req, res) => {
                 console.log(c);
                 let community = {
                     cId: c._id,
-                    cName: c.cName
+                    cName: c.cName,
+                    isFollowing: 'no'
                 };
 
-                if(!user.moderatesCommunities.includes(c._id)) {
-                    console.log('not a moderator');
+                if(user && !user.moderatesCommunities.includes(c._id)) {
                     if(user.followingCommunities.includes(c._id)) {
-                        console.log('a follower');
                         community.isFollowing = 'yes';
-                    } else {
-                        console.log('not a follower');
-                        community.isFollowing = 'no';
                     }
                 }
 
                 communities.push(community);
             });
 
-            res.end(JSON.stringify(communities));
+            res.json({
+                message: communities
+            });
+            res.end();
         });
     })
 });

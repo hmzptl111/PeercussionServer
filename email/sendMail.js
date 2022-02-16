@@ -17,10 +17,12 @@ const sendMail = (uId, uMail) => {
         expiresIn: '1h'
     }, (err, token) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
-        console.log(token);
 
         transporter.sendMail({
             to: uMail,

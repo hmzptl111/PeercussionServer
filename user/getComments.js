@@ -12,16 +12,26 @@ app.post('', (req, res) => {
     .populate('comments', ['pId', 'pTitle', 'cName', 'comment', 'upvotes', 'downvotes', 'updatedAt'])
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
+        
         if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: 'User does not exist'
+            });
+            res.end();
             return;
         }
 
-        console.log(user);
-        res.end(JSON.stringify(user.comments));
+        res.json({
+            message: user.comments
+        });
+        res.end();
+        return;
     })
 });
 

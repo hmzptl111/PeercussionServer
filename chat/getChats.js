@@ -14,19 +14,32 @@ app.post('', isAuth, (req, res) => {
     })
     .exec((err, room) => {
         if(err) {
-            console.log(`Something went wrong`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
         if(!room) {
-            console.log('Room doesn\'t exist');
+            res.json({
+                error: 'Room does not exist'
+            });
+            res.end();
             return;
         }
         if(!room.participants.includes(uId)) {
-            console.log('Unauthentic request');
+            res.json({
+                error: 'You have to be friends with users you wish to communicate'
+            });
+            res.end();
             return;
         }
 
-        res.end(JSON.stringify(room.messages));
+        res.json({
+            message: room.messages
+        });
+        res.end();
+        return;
     });
 });
 

@@ -5,8 +5,6 @@ const isAuth = require('../auth/isAuth');
 
 const User = require('../models/user');
 
-// const socketConnections = require('../index');
-
 app.post('', isAuth, (req, res) => {
     console.log(global.socketConnections);
     if(global.socketConnections === []) return;
@@ -20,11 +18,10 @@ app.post('', isAuth, (req, res) => {
     .populate('chatUsers')
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
@@ -39,8 +36,11 @@ app.post('', isAuth, (req, res) => {
             };
         }
 
-        // console.log(result);
-        res.end(JSON.stringify(result));
+        res.json({
+            message: result
+        });
+        res.end();
+        return;
     })
 });
 

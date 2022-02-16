@@ -22,31 +22,47 @@ app.post('/:username', (req, res) => {
     .select(selectQuery)
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
         if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: 'User does not exist'
+            });
+            res.end();
             return;
         }
 
         if(personalProfile) {
-            res.end(JSON.stringify(user));
+            res.json({
+                message: user
+            });
+            res.end();
             return;
         }
 
         if(user.isAccountPrivate) {
             const isFriend = user.friends.includes(uId);
             if(!isFriend) {
-                res.end(JSON.stringify({
-                    _id: user._id,
-                    error: 'This account is private'
-                }));
+                res.json({
+                    error: {
+                        _id: user._id,
+                        message: 'This account is private'
+                    }
+                });
+                res.end();
                 return;
             }
         }
 
-        res.end(JSON.stringify(user));
+        res.json({
+            message: user
+        });
+        res.end();
+        return;
     });
     return;
 });

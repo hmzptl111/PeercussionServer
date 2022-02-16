@@ -7,7 +7,9 @@ const uuidv4 = require('uuid').v4;
 
 const User = require('../models/user');
 
-app.post('', (req, res) => {
+const isAuth = require('../auth/isAuth');
+
+app.post('', isAuth, (req, res) => {
     const {profilePicture} = req.body;
     const {uId} = req.session;
 
@@ -17,10 +19,10 @@ app.post('', (req, res) => {
     .exec((err, user) => {
         if(err) {
             console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
@@ -30,29 +32,37 @@ app.post('', (req, res) => {
         if(user.profilePicture) {
             console.log(user.profilePicture);
             fs.unlink(`./uploads/profilePictures/${user.profilePicture}`, async (err) => {
-                if(err && err.code == 'ENOENT') {
-                    console.info('File doesn\'t exist');
+                if(err) {
+                    if(err.code == 'ENOENT') {
+                        res.json({
+                            error: 'Image does not exist'
+                        });
+                        res.end();
+                        return;
+                    }
+                    res.json({
+                        error: err
+                    });
+                    res.end();
                     return;
-                } else if (err) {
-                    console.log(`Something went wrong: ${err}`);
-                    return;
-                } 
+                }
             });
         }
 
         const uuid = uuidv4();
         fs.writeFile(`./uploads/profilePictures/${uuid}.jpeg`, imageBuffer, async (err, image) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
 
             user.profilePicture = `${uuid}.jpeg`;
             await user.save();
             
-            res.end(JSON.stringify({
-                message: 'Profile picture updated'
-            }));
+            res.end();
         });
     });
 });

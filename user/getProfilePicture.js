@@ -15,18 +15,18 @@ app.post('', (req, res) => {
     .select('profilePicture')
     .exec((err, user) => {
         if(err) {
-            console.log(`Something went wrong: ${err}`);
-            return;
-        }
-        if(!user) {
-            console.log('User doesn\'t exist');
+            res.json({
+                error: err
+            });
+            res.end();
             return;
         }
 
         if(user.username === uName) {
-            res.end(JSON.stringify({
-                url: user.profilePicture
-            }));
+            res.json({
+                message: user.profilePicture
+            });
+            res.end();
             return;
         }
 
@@ -36,24 +36,26 @@ app.post('', (req, res) => {
         .select('profilePicture')
         .exec((err, targetUser) => {
             if(err) {
-                console.log(`Something went wrong: ${err}`);
-                return;
-            }
-            if(!targetUser) {
-                console.log('User doesn\'t exist');
+                res.json({
+                    error: err
+                });
+                res.end();
                 return;
             }
             
             if(!targetUser.profilePicture) {
-                res.end(JSON.stringify({
-                    message: 'No profile picture found'
-                }));
+                res.json({
+                    message: 'no pp found'
+                });
+                res.end();
+                return;
             }
 
-            res.end(JSON.stringify({
-                // url: `${process.env.ROOT_URL}/uploads/profilePictures/${targetUser.profilePicture}`
-                url: targetUser.profilePicture
-            }));
+            res.json({
+                message: targetUser.profilePicture
+            });
+            res.end();
+            return;
         });
     });
 });

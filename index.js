@@ -16,12 +16,29 @@ const User = require('./models/user');
 const Room = require('./models/room');
 
 
+const store = new MongoDBSessionStore({
+    uri: process.env.DB_URI,
+    databaseName: 'peercussion',
+    collection: 'sessions'
+});
+const sessionOptions = {
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+    cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        httpOnly: true
+    }
+}
+const sessionMiddleware = session(sessionOptions);
+app.use(sessionMiddleware);
 
-
-
-
-
-
+io.use((socket, next) => {
+    sessionMiddleware(socket.request, {}, next);
+    // sessionMiddleware(socket.request, socket.request.res, next); will not work with websocket-only
+    // connections, as 'socket.request.res' will be undefined in that case
+});
 
 
 let socketConnections = [];
@@ -30,12 +47,13 @@ global.socketConnections = socketConnections;
 io.on('connection', (socket) => {
     console.log('socket connection established');
 
-    if(!socket.request._query.uId || !socket.request._query.uName) return;
+    socket.data.uId = socket.request.session.uId;
+    socket.data.uName = socket.request.session.uName;
 
-    socket.data.uId = socket.request._query.uId;
-    socket.data.uName = socket.request._query.uName;
+    console.log(socket.data.uId);
+    console.log(socket.data.uName);
 
-    global.socketConnections.push(socket.request._query.uId.toString());
+    global.socketConnections.push(socket.request.session.uId);
 
     console.log(`${socket.data.uName} connected`);
 
@@ -66,7 +84,8 @@ io.on('connection', (socket) => {
     });
 
     socket.on('join', (rooms) => {
-        socket.join(rooms);   
+        socket.join(rooms);
+        console.log(`${socket.data.uName} joined ${rooms}`);
     });
 
     socket.on('disconnect', () => {
@@ -117,6 +136,8 @@ io.on('connection', (socket) => {
         }
         console.log(newMessage);
 
+        socket.to(room).emit('message', newMessage);
+
         Room.findOne({
             _id: roomID
         })
@@ -138,7 +159,7 @@ io.on('connection', (socket) => {
                 targetRoom.messages.push(newMessage);
                 await targetRoom.save();
 
-                socket.to(room).emit('message', newMessage);
+                // socket.to(room).emit('message', newMessage);
             });
     });
 });
@@ -246,23 +267,7 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json({limit: '50mb'}));
 app.use(cookieParser());
 
-//
-const store = new MongoDBSessionStore({
-    uri: process.env.DB_URI,
-    databaseName: 'peercussion',
-    collection: 'sessions'
-});
-const sessionOptions = {
-    secret: process.env.SESSION_SECRET_KEY,
-    resave: false,
-    saveUninitialized: false,
-    store: store,
-    cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        httpOnly: true
-    }
-}
-app.use(session(sessionOptions));
+// app.use(session(sessionOptions));
 //
 
 app.use('/create', create);

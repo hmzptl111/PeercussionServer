@@ -17,45 +17,62 @@ app.post('/:type', async (req, res) => {
     const pattern = /\W/g;
     const isInvalid = pattern.test(text);
 
-    if(!isInvalid) {
-        if(type === 'community') {
-            Community.find({
-                cName: {
-                    $regex: new RegExp(text, 'ig')
-                }
-            })
-            .limit(5)
-            .select('cName cThumbnail')
-            .exec((err, communities) => {
-                if(err) {
-                    console.log(`Something went wrong: ${err}`);
-                    return;
-                }
-
-                res.end(JSON.stringify(communities));
-            });
-        } else if(type === 'user') {
-            User.find({
-                username: {
-                    $regex: new RegExp(text, 'ig')
-                }
-            })
-            .limit(5)
-            .select('username profilePicture')
-            .exec((err, users) => {
-                if(err) {
-                    console.log(`Something went wrong: ${err}`);
-                    return;
-                }
-                
-                const matchedUsers = users.filter(user => user._id.toString() !== uId);
-
-                res.end(JSON.stringify(matchedUsers));
-            });
-        }   
-    } else {
-        res.end('invalid characters');
+    if(isInvalid) {
+        res.json({
+            error: 'Invalid input'
+        });
+        res.end();
         return;
+    }
+
+    if(type === 'community') {
+        Community.find({
+            cName: {
+                $regex: new RegExp(text, 'ig')
+            }
+        })
+        .limit(5)
+        .select('cName cThumbnail')
+        .exec((err, communities) => {
+            if(err) {
+                res.json({
+                    error: err
+                });
+                res.end();
+                return;
+            }
+
+            res.json({
+                message: communities
+            });
+            res.end();
+            return;
+        });
+    } else if(type === 'user') {
+        User.find({
+            username: {
+                $regex: new RegExp(text, 'ig')
+            }
+        })
+        .limit(5)
+        .select('username profilePicture')
+        .exec((err, users) => {
+            if(err) {
+                res.json({
+                    error: err
+                });
+                res.end();
+                return;
+            }
+            
+            const matchedUsers = users.filter(user => user._id.toString() !== uId);
+
+            res.json({
+                message: matchedUsers
+            });
+            res.end();
+            return;
+        });
     }
 });
 
