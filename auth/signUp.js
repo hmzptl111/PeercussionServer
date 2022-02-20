@@ -81,7 +81,7 @@ app.post('', (req, res) => {
         newUser.save()
         .then(result => {
             const {_id, email, username} = result;
-            // sendMail(_id, email);
+            sendMail(_id, email);
 
             res.json({
                 message: `Hello ${username}, welcome to Peercussion. An email has been sent to your account, please verify your email to sign in.`

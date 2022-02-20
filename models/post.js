@@ -10,6 +10,9 @@ const postStructure = {
         type: String,
         required: true
     },
+    uProfilePicture: {
+        type: String
+    },
     cId: {
         type: mongoose.Types.ObjectId,
         required: true

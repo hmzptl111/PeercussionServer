@@ -20,8 +20,14 @@ app.post('', (req, res) => {
         }
 
         if(!user) {
+            // res.json({
+            //     error: 'User does not exist'
+            // });
             res.json({
-                error: 'User does not exist'
+                message: {
+                    isFollowing: 'no',
+                    isOwner: 'no'
+                }
             });
             res.end();
             return;

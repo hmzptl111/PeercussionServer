@@ -68,6 +68,7 @@ app.post('/:type', isAuth, async (req, res) => {
             let payload = {
                 uId: uId,
                 uName: uName,
+                uProfilePicture: user.profilePicture && user.profilePicture,
                 cId: cId,
                 cName: cName,
                 title: title,

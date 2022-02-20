@@ -24,7 +24,7 @@ app.post('', (req, res) => {
         Community.findOne({
             cName: cName
         })
-        .populate('relatedCommunities', 'cName')
+        .populate('relatedCommunities', 'cName cThumbnail')
         .exec((err, targetCommunity) => {
             if(err) {
                 res.json({
@@ -48,9 +48,10 @@ app.post('', (req, res) => {
                 let community = {
                     cId: c._id,
                     cName: c.cName,
+                    cThumbnail: c.cThumbnail,
                     isFollowing: 'no'
                 };
-
+                
                 if(user && !user.moderatesCommunities.includes(c._id)) {
                     if(user.followingCommunities.includes(c._id)) {
                         community.isFollowing = 'yes';

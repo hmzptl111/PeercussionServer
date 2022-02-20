@@ -9,7 +9,7 @@ app.post('', (req, res) => {
     Community.findOne({
         cName: cName
     })
-    .populate('restrictedUsers', 'username')
+    .populate('restrictedUsers', 'username profilePicture')
     .exec((err, community) => {
         if(err) {
             res.json({

@@ -1,15 +1,18 @@
 const express = require('express');
 const app = express();
 
-const isAuth = require('../auth/isAuth');
-
 const User = require('../models/user');
 
-app.post('', isAuth, (req, res) => {
+app.post('', (req, res) => {
     console.log(global.socketConnections);
     if(global.socketConnections === []) return;
 
     const {uId} = req.session;
+
+    if(!uId) {
+        res.end();
+        return;
+    }
 
     User.findOne({
         _id: uId

@@ -41,7 +41,7 @@ app.post('', (req, res) => {
 
         if(!user.isEmailValidated) {
             res.json({
-                error: 'To sign in, you must verify your email account. A verification email has been sent to you, please check your index'
+                error: 'To sign in, you must verify your email account. A verification email has been sent to you, please check your inbox'
             });
             res.end();
             return;

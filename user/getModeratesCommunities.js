@@ -56,7 +56,6 @@ app.post('', (req, res) => {
                     cName: c.cName,
                     isFollowing: 'no'
                 };
-                console.log(c);
                 if(user && user.followingCommunities.includes(c._id)) {
                     community.isFollowing = 'yes';
                 }
