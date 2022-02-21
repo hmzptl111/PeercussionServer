@@ -111,15 +111,25 @@ app.post('', isAuth, (req, res) => {
                 }
     
                 const updatedTargetUserFriendlist = targetUser.friends.filter(u => {
-                    u.toString() !== target
+                    u.toString() !== target;
                 });
 
                 const updatedUserFriendlist = user.friends.filter(u => {
-                    u.toString() !== target
+                    u.toString() !== target;
+                });
+
+                const usersUpdatedChatUsers = user.chatUsers.filter(u => {
+                    u.toString() !== target;
+                });
+
+                const targetUsersUpdatedChatUsers = targetUser.chatUsers.filter(u => {
+                    u.toString() !== uId;
                 });
                 
                 targetUser.friends = updatedTargetUserFriendlist;
                 user.friends = updatedUserFriendlist;
+                user.chatUsers = usersUpdatedChatUsers;
+                targetUser.chatUsers = targetUsersUpdatedChatUsers;
 
                 await targetUser.save();
                 await user.save();

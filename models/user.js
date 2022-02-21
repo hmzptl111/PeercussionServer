@@ -25,7 +25,8 @@ const userStructure = {
         ref: 'Comment'
     }],
     about: {
-        type: String
+        type: String,
+        maxLength: 255
     },
     points: {
         type: Number

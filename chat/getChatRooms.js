@@ -31,11 +31,11 @@ app.post('', (req, res) => {
         let result = [];
         for(let i = 0; i < user.rooms.length; i++) {
             result[i] = {
-                uId: user.chatUsers[i]._id,
-                uName: user.chatUsers[i].username,
-                uProfilePicture: user.chatUsers[i].profilePicture,
+                uId: user.chatUsers[i] && user.chatUsers[i]._id,
+                uName: user.chatUsers[i] && user.chatUsers[i].username,
+                uProfilePicture: user.chatUsers[i] && user.chatUsers[i].profilePicture,
                 room: user.rooms[i],
-                isUserOnline: global.socketConnections.includes(user.chatUsers[i]._id.toString()) ? true : false
+                isUserOnline: global.socketConnections.includes(user.chatUsers[i] && user.chatUsers[i]._id.toString()) ? true : false
             };
         }
 

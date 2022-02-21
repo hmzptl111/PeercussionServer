@@ -20,6 +20,7 @@ const communityStructure = {
     },
     desc: {
         type: String,
+        maxLength: 255,
         required: true
     },
     posts: [{

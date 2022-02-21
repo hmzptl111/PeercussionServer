@@ -117,10 +117,10 @@ app.post('/:type', isAuth, async (req, res) => {
             res.end();
             return;
         }
-
-        if(desc.length > 255) {
+        
+        if(desc.length <= 0 || desc.length > 255) {
             res.json({
-                error: 'Community description should not exceed 255 characters'
+                error: 'Community description must not be empty and must exceed 255 characters'
             });
             res.end();
             return;
@@ -168,20 +168,29 @@ app.post('/:type', isAuth, async (req, res) => {
                     res.end();
                     return;
                 }
+
+                console.log('1');
     
                 const payload = {
                     mId: uId,
                     mName: uName,
                     cName: cName,
                     desc: desc,
-                    relatedCommunities: relatedCommunities
+                    relatedCommunities: relatedCommunities && relatedCommunities
                 }
+
+                console.log('2');
     
                 const newCommunity = new Community(payload);
                 newCommunity.save()
                 .then(async (newCommunityResponse) => {
+                    console.log('3');
+                    
                     user.moderatesCommunities.push(newCommunityResponse._id);
                     await user.save();
+                    
+                    console.log('4');
+                    
                     res.json({
                         message: cName
                     });
@@ -189,8 +198,12 @@ app.post('/:type', isAuth, async (req, res) => {
                     return;
                 })
                 .catch(err => {
+                    console.log('5');
+
+                    console.log(err);
+
                     res.json({
-                        error: err
+                        error: `${err._message}, please make sure all the required fields are filled with valid data`
                     });
                     res.end();
                     return;

@@ -46,41 +46,84 @@ app.post('', isAuth, (req, res) => {
                 participants: [user._id, targetUser._id]
             }
 
-            const newChat = new Chat(payload);
-            newChat.save()
-            .then(async (chat) => {
-                user.rooms.push(chat);
-                targetUser.rooms.push(chat);
+            const idList = [uId, targetUser._id];
 
-                user.chatUsers.push(targetUser._id);
-                targetUser.chatUsers.push(user._id);
-                
-                const updatedTargetUserFriendlist = targetUser.friendRequestsSent.filter(u => {
-                    u.toString() !== target
-                });
-    
-                const updatedUserFriendlist = user.pendingFriendRequests.filter(u => {
-                    u.toString() !== uId
-                });
-    
-                targetUser.friendRequestsSent = updatedTargetUserFriendlist;
-                user.pendingFriendRequests = updatedUserFriendlist;
-    
-                user.friends.unshift(target);
-                targetUser.friends.unshift(uId);
-    
-                await targetUser.save();
-                await user.save();
-    
-                res.end();
+            Chat.findOne({
+                participants: {
+                    $in: idList
+                }
             })
-            .catch(err => {
-                res.json({
-                    error: err
-                });
-                res.end();
-                return;
-            })
+            .exec(async (err, docs) => {
+                if(err) {
+                    res.json({
+                        error: err
+                    });
+                    res.end();
+                    return;
+                }
+
+                if(!docs) {
+                    const newChatRoom = new Chat(payload);
+                    newChatRoom.save()
+                    .then(async (chat) => {
+                        user.rooms.push(chat);
+                        targetUser.rooms.push(chat);
+
+                        user.chatUsers.push(targetUser._id);
+                        targetUser.chatUsers.push(user._id);
+                        
+                        const updatedTargetUserFriendlist = targetUser.friendRequestsSent.filter(u => {
+                            u.toString() !== target
+                        });
+            
+                        const updatedUserFriendlist = user.pendingFriendRequests.filter(u => {
+                            u.toString() !== uId
+                        });
+            
+                        targetUser.friendRequestsSent = updatedTargetUserFriendlist;
+                        user.pendingFriendRequests = updatedUserFriendlist;
+            
+                        user.friends.unshift(target);
+                        targetUser.friends.unshift(uId);
+            
+                        await targetUser.save();
+                        await user.save();
+            
+                        res.end();
+                    })
+                    .catch(err => {
+                        res.json({
+                            error: err
+                        });
+                        res.end();
+                        return;
+                    });
+                } else {
+                    user.chatUsers.push(targetUser._id);
+                    targetUser.chatUsers.push(user._id);
+                    
+                    const updatedTargetUserFriendlist = targetUser.friendRequestsSent.filter(u => {
+                        u.toString() !== target
+                    });
+        
+                    const updatedUserFriendlist = user.pendingFriendRequests.filter(u => {
+                        u.toString() !== uId
+                    });
+        
+                    targetUser.friendRequestsSent = updatedTargetUserFriendlist;
+                    user.pendingFriendRequests = updatedUserFriendlist;
+        
+                    user.friends.unshift(target);
+                    targetUser.friends.unshift(uId);
+        
+                    await targetUser.save();
+                    await user.save();
+        
+                    res.end();
+                }
+            });
+
+            
         });
     });
 });

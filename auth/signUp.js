@@ -18,6 +18,14 @@ app.post('', (req, res) => {
         res.end();
         return;
     }
+
+    if(about.length > 255) {
+        res.json({
+            error: 'Must not exceed 255 characters'
+        });
+        res.end();
+        return;
+    }
     
     //if there's any non-word character(anything except [a-zA-Z0-9_]), username is invalid
     //if username starts with a digit like 3hamza, it is invalid
