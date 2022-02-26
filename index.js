@@ -14,6 +14,8 @@ const io = new Server(httpServer);
 
 const User = require('./models/user');
 const Room = require('./models/room');
+const uuidv4 = require('uuid').v4;
+
 
 
 const store = new MongoDBSessionStore({
@@ -50,9 +52,6 @@ io.on('connection', (socket) => {
     socket.data.uId = socket.request.session.uId;
     socket.data.uName = socket.request.session.uName;
 
-    console.log(socket.data.uId);
-    console.log(socket.data.uName);
-
     global.socketConnections.push(socket.request.session.uId);
 
     console.log(`${socket.data.uName} connected`);
@@ -66,7 +65,7 @@ io.on('connection', (socket) => {
             return;
         }
         if(!user) {
-            console.log('User doesn\'t exist');
+            // console.log('User doesn\'t exist');
             return;
         }
 
@@ -85,7 +84,7 @@ io.on('connection', (socket) => {
 
     socket.on('join', (rooms) => {
         socket.join(rooms);
-        console.log(`${socket.data.uName} joined ${rooms}`);
+        // console.log(`${socket.data.uName} joined ${rooms}`);
     });
 
     socket.on('disconnect', () => {
@@ -103,7 +102,7 @@ io.on('connection', (socket) => {
                 return;
             }
             if(!user) {
-                console.log('User doesn\'t exist');
+                // console.log('User doesn\'t exist');
                 return;
             }
     
@@ -129,6 +128,7 @@ io.on('connection', (socket) => {
         if(!message) return;
 
         const newMessage = {
+            id: uuidv4(),
             type,
             time,
             message,
@@ -136,7 +136,7 @@ io.on('connection', (socket) => {
         }
         console.log(newMessage);
 
-        socket.to(room).emit('message', newMessage);
+        io.to(room).emit('message', newMessage);
 
         Room.findOne({
             _id: roomID
@@ -157,24 +157,10 @@ io.on('connection', (socket) => {
             }
                 
                 targetRoom.messages.push(newMessage);
-                await targetRoom.save();
-
-                // socket.to(room).emit('message', newMessage);
+                targetRoom.save();
             });
     });
 });
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //initializations

@@ -9,11 +9,25 @@ const User = require('../models/user');
 app.post('', (req, res) => {
     const {username, password, email, about} = req.body;
 
-    console.log('create account');
-
     if(username === '' || password === '' || email === '') {
         res.json({
             error: 'Some or all the required fields are empty'
+        });
+        res.end();
+        return;
+    }
+
+    if(username.length > 32) {
+        res.json({
+            error: 'Invalid username'
+        });
+        res.end();
+        return;
+    }
+
+    if(password.length > 64) {
+        res.json({
+            error: 'Invalid password'
         });
         res.end();
         return;
@@ -64,7 +78,7 @@ app.post('', (req, res) => {
     }, async (err, user) => {
         if(err) {
             res.json({
-                error: `Something went wrong: ${err}`
+                error: err
             });
             res.end();
             return;
@@ -99,7 +113,7 @@ app.post('', (req, res) => {
         })
         .catch(err => {
             res.json({
-                error: `Something went wrong: ${err}`
+                error: err
             });
             res.end();
             return;

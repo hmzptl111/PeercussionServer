@@ -27,7 +27,6 @@ const postStructure = {
     },
     body: {
         type: Array,
-        required: false,
         default: {}
     },
     upvotes: {
@@ -49,8 +48,7 @@ const postStructure = {
         default: 0
     },
     thumbnail: {
-        type: String,
-        required: false
+        type: String
     }
 }
 

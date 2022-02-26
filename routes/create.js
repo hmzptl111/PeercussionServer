@@ -17,9 +17,15 @@ app.post('/:type', isAuth, async (req, res) => {
         const {uId, uName} = req.session;
         const {cId, cName, title, body} = req.body;
 
-        if(title === '') {
+        if(title.length <= 0) {
             res.json({
                 error: 'Post title cannot be empty'
+            });
+            res.end();
+            return;
+        } else if(title.length > 100) {
+            res.json({
+                error: 'Post title should not exceed 100 characters'
             });
             res.end();
             return;
@@ -43,6 +49,16 @@ app.post('/:type', isAuth, async (req, res) => {
                 });
                 res.end();
                 return;
+            }
+
+            if(!user.moderatesCommunities.includes(cId)) {
+                if(!user.followingCommunities.includes(cId)) {
+                    res.json({
+                        error: 'Only followers can publish posts'
+                    });
+                    res.end();
+                    return;
+                }
             }
 
         Community.findOne({

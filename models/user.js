@@ -5,11 +5,14 @@ const userStructure = {
     username: {
         type: String,
         required: true,
-        unique: true
+        unique: true,
+        maxLength: 32
     },
     password: {
         type: String,
-        required: true
+        required: true,
+        minLength: 8,
+        maxLength: 64
     },
     email: {
         type: String,
@@ -27,9 +30,6 @@ const userStructure = {
     about: {
         type: String,
         maxLength: 255
-    },
-    points: {
-        type: Number
     },
     friends: [{
         type: mongoose.Types.ObjectId,
@@ -86,10 +86,6 @@ const userStructure = {
         type: mongoose.Types.ObjectId,
         ref: 'Community'
     }]
-    // restrictedFrom: [{
-    //     type: mongoose.Types.ObjectId,
-    //     ref: 'Community'
-    // }],
 }
 
 const userOptions = {
@@ -99,10 +95,5 @@ const userOptions = {
 const userSchema = new Schema(userStructure, userOptions);
 
 const User = mongoose.model('User', userSchema);
-
-// userSchema.pre('save', async function(next) {
-//     this.profilePicture = process.env.ROOT_URL + '/static/images/' + this.username.toLowerCase();
-//     next();
-// });
 
 module.exports = User;

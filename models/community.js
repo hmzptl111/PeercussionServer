@@ -32,16 +32,6 @@ const communityStructure = {
         required: true,
         default: 0
     },
-    upvotes: {
-        type: Number,
-        required: true,
-        default: 0
-    },
-    downvotes: {
-        type: Number,
-        required: true,
-        default: 0
-    },
     relatedCommunities: [{
         type: mongoose.Types.ObjectId,
         ref: 'Community'

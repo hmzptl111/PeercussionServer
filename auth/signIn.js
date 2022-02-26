@@ -25,7 +25,7 @@ app.post('', (req, res) => {
     }, async (err, user) => {
         if(err) {
             res.json({
-                error: `Something went wrong: ${err}`
+                error: err
             });
             res.end();
             return;
@@ -61,7 +61,9 @@ app.post('', (req, res) => {
         req.session.uName = user.username;
         // res.cookie('uId', user._id.toString(), {maxAge: 1000 * 60 * 60 * 24 * 7});
         // res.cookie('uName', user.username, {maxAge: 1000 * 60 * 60 * 24 * 7});
-        console.log(req.session);
+        req.session.save();
+        console.log(req.session.uId);
+        console.log(req.session.uName);
         res.json({
             message: `Hello, ${user.username}. Welcome back to Peercussion`,
             uId: req.session.uId.toString(),

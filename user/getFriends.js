@@ -22,7 +22,7 @@ app.post('', (req, res) => {
         User.findOne({
             username: uName
         })
-        .populate('friends', 'username')
+        .populate('friends', 'username profilePicture')
         .exec((err, reqUser) => {
             if(err) {
                 res.json({
@@ -42,10 +42,11 @@ app.post('', (req, res) => {
     
             let users = [];
             for(let i = 0; i < reqUser.friends.length; i++) {
-                let temp = {_id: null, username: '', isFriend: false};
+                let temp = {_id: null, username: '', profilePicture: '', isFriend: false};
 
                 temp._id = reqUser.friends[i]._id;
                 temp.username = reqUser.friends[i].username;
+                temp.profilePicture = reqUser.friends[i].profilePicture;
                 temp.isFriend = user && user.friends.includes(temp._id) ? 'yes' : 'no';
 
                 if(temp.isFriend === 'no') {
