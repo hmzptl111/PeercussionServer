@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
-require('dotenv').config()
+require('dotenv').config();
 
 const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -10,11 +10,11 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-const sendMail = (uId, uMail) => {
+const sendMail = (identifier, uMail, mSubject, targetPath, textContent, clientSide = false) => {
     jwt.sign({
-        uId: uId
+        identifier: identifier
     }, process.env.EMAIL_SECRET, {
-        expiresIn: '1h'
+        expiresIn: '12h'
     }, (err, token) => {
         if(err) {
             res.json({
@@ -26,8 +26,8 @@ const sendMail = (uId, uMail) => {
 
         transporter.sendMail({
             to: uMail,
-            subject: 'Confirm Email - Peercussion',
-            html: `<a href = http://localhost:3001/emailConfirmation/${token}>Confirm Email</a>`
+            subject: mSubject,
+            html: `<a href = http://localhost:${clientSide ? '3000': process.env.PORT}/${targetPath}/${token}>${textContent}</a>`
         });
     });
 }

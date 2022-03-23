@@ -1,5 +1,5 @@
 const express = require('express');
-const app = express();
+const app = express.Router();
 
 const Community = require('../models/community');
 const User = require('../models/user');
@@ -43,7 +43,7 @@ app.post('/:type', (req, res) => {
                         return;
                     }
 
-                    // all other methods create 'posts' by referencing 'fetchedPosts' which wouldn't allow updates and since stringifying and parsing the array returns a new data structure, this approach was finalized
+                    // all other methods available in JS create 'posts' by referencing 'fetchedPosts' which didn't allow updates and since stringifying and parsing the array returns a new data structure, this approach was finalized
                     let posts = JSON.parse(JSON.stringify(fetchedPosts));
                     for(let i = 0; i < posts.length; i++) {
                         if(user && user.upvotedPosts.toString().includes(posts[i]._id.toString())) {

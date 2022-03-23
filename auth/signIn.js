@@ -10,7 +10,7 @@ app.post('', (req, res) => {
 
     if(username === '' || password === '') {
         res.json({
-            error: 'Some or all the required fields are empty'
+            error: 'Some or all of the required fields are empty'
         });
         res.end();
         return;
@@ -33,8 +33,8 @@ app.post('', (req, res) => {
 
         if(!user) {
             res.json({
-                error: 'Username or email doesn\'t exist'
-            })
+                error: 'Username or email does not exist'
+            });
             res.end();
             return;
         }
@@ -50,7 +50,7 @@ app.post('', (req, res) => {
         const response = await bcrypt.compare(password, user.password);
         if(!response) {
             res.json({
-                error: 'Username or password incorrect'
+                error: 'Incorrect username or password'
             });
             res.end();
             return;

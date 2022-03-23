@@ -125,8 +125,6 @@ app.post('/:type', isAuth, async (req, res) => {
         const {uId, uName} = req.session;
 
         if(cName === '') {
-            // res.status(400);
-            // res.end('Community name can\'t be empty');
             res.json({
                 error: 'Community name cannot be empty'
             });

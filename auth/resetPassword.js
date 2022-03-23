@@ -1,20 +1,26 @@
 const express = require('express');
-const app = express();
-
-const jwt = require('jsonwebtoken');
+const app = express.Router();
 require('dotenv').config();
 
 const User = require('../models/user');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-app.get('/:token', (req, res) => {
+app.post('/:token', (req, res) => {
     const {token} = req.params;
+    const {newPassword} = req.body;
+    console.log(token);
 
     const data = jwt.verify(token, process.env.EMAIL_SECRET);
 
+    console.log(data);
+
     User.findOne({
-        _id: data.identifier
+        $or: [
+            {username: data.identifier},
+            {email: data.identifier}
+        ]
     })
-    .select('isEmailValidated')
     .exec(async (err, user) => {
         if(err) {
             res.json({
@@ -32,11 +38,15 @@ app.get('/:token', (req, res) => {
             return;
         }
 
-        user.isEmailValidated = true;
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
         await user.save();
 
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end(`Your email has been validated, you may now <a href = 'http://localhost:3000/signin'>sign in</a>  to Peercussion`);
+        res.json({
+            message: 'Password reset successful'
+        });
+        res.end();
+        return;
     });
 });
 

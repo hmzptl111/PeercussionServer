@@ -16,7 +16,8 @@ const User = require('./models/user');
 const Room = require('./models/room');
 const uuidv4 = require('uuid').v4;
 
-
+const cors = require('cors');
+app.use(cors());
 
 const store = new MongoDBSessionStore({
     uri: process.env.DB_URI,
@@ -122,8 +123,7 @@ io.on('connection', (socket) => {
 
     socket.on('message', async (socketMessage, room) => {
         if(!room) return;
-        
-        const {type, time, message, roomID} = socketMessage;
+        const {type, time, message} = socketMessage;
 
         if(!message) return;
 
@@ -139,7 +139,7 @@ io.on('connection', (socket) => {
         io.to(room).emit('message', newMessage);
 
         Room.findOne({
-            _id: roomID
+            _id: room
         })
         .exec(async (err, targetRoom) => {
             if(err) {
@@ -238,12 +238,17 @@ const signUp = require('./auth/signUp');
 const signIn = require('./auth/signIn');
 const signOut = require('./auth/signOut');
 const userAuthStatus = require('./auth/userAuthStatus');
+const changePassword = require('./auth/changePassword');
+const forgotPassword = require('./auth/forgotPassword');
+const resetPassword = require('./auth/resetPassword');
 
 //follow
 const follow = require('./routes/follow');
 const unfollow = require('./routes/unfollow');
 const followStatus = require('./routes/followStatus');
 const acceptFriendRequest = require('./routes/acceptFriendRequest');
+
+const update = require('./routes/update');
 
 app.use('/uploads', express.static('./uploads'));
 app.use('/uploads/postImages', express.static('./uploads/postImages'));
@@ -252,8 +257,6 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json({limit: '50mb'}));
 app.use(cookieParser());
 
-// app.use(session(sessionOptions));
-//
 
 app.use('/create', create);
 app.use('/emailConfirmation', emailConfirmation);
@@ -267,6 +270,9 @@ app.use('/signUp', signUp);
 app.use('/signIn', signIn);
 app.use('/signOut', signOut);
 app.use('/checkUserAuthStatus', userAuthStatus);
+app.use('/changePassword', changePassword);
+app.use('/forgotPassword', forgotPassword);
+app.use('/resetPassword', resetPassword);
 app.use('/createComment', createComment);
 app.use('/comments', comments);
 app.use('/votePost', votePost);
@@ -291,3 +297,4 @@ app.use('/getChatRooms', getChatRooms);
 app.use('/restrictUser', restrictUser);
 app.use('/getRelatedCommunities', getRelatedCommunities);
 app.use('/getRestrictedUsers', getRestrictedUsers);
+app.use('/update', update);

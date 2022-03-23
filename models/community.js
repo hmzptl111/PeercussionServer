@@ -4,14 +4,17 @@ const Schema = mongoose.Schema;
 const communityStructure = {
     mId: {
         type: mongoose.Types.ObjectId,
+        immutable: true,
         required: true
     },
     mName: {
         type: String,
+        immutable: true,
         required: true
     },
     cName: {
         type: String,
+        immutable: true,
         required: true,
         unique: true
     },
